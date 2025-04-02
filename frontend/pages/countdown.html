@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Countdown - Voting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-900 text-white p-5">
+            <h2 class="text-xl font-bold">Voting Dashboard</h2>
+            <ul class="mt-6">
+                <li class="py-2"><a href="Dash.html" class="hover:text-gray-300">Go to Dashboard</a></li>
+                <li class="py-2"><a href="candidate.html" class="hover:text-gray-300">Manage Candidates</a></li>
+                <li class="py-2"><a href="Vote.html" class="hover:text-gray-300">Manage Vote</a></li>
+                <li class="py-2"><a href="countdown.html" class="hover:text-gray-300">Election Time Countdown</a></li>
+                <li class="py-2"><a href="results.html" class="hover:text-gray-300">Results</a></li>
+            </ul>
+            <button class="mt-6 bg-red-500 px-4 py-2 rounded text-white w-full">Logout</button>
+        </div>
+
+        <div class="flex-1 p-6">
+            <h1 class="text-2xl font-bold">Election Countdown</h1>
+
+            <div id="time-setting" class="bg-white p-6 mt-6 shadow rounded">
+                <h2 class="text-xl font-bold">Set Election Start and End Time</h2>
+                <div class="mt-4">
+                    <label for="start-time" class="block text-gray-600">Election Start Date and Time</label>
+                    <input type="datetime-local" id="start-time" class="mt-2 p-2 border rounded w-full" />
+                </div>
+                <div class="mt-4">
+                    <label for="end-time" class="block text-gray-600">Election End Date and Time</label>
+                    <input type="datetime-local" id="end-time" class="mt-2 p-2 border rounded w-full" />
+                </div>
+                <button id="set-time-btn"
+                    class="mt-4 bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700 w-full">Set
+                    Election Time</button>
+
+                <p id="time-status" class="mt-4 text-gray-600">Please set the election start and end time.</p>
+            </div>
+
+            <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded hidden">
+                <h2 class="text-xl font-bold">Time Remaining</h2>
+                <p id="countdown" class="text-4xl font-bold text-center">Loading...</p>
+                <p id="start-time-display" class="text-center mt-2 text-gray-600">Election Start: --:--</p>
+                <p id="end-time-display" class="text-center text-gray-600">Election End: --:--</p>
+                <div class="mt-4 flex justify-center">
+                    <button id="cancel-time-btn"
+                        class="bg-red-500 px-4 py-2 text-white rounded hover:bg-red-700 mr-2">Cancel Election
+                        Time</button>
+                    <button id="modify-time-btn"
+                        class="bg-yellow-500 px-4 py-2 text-white rounded hover:bg-yellow-700">Modify Election
+                        Time</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let electionStartTime = localStorage.getItem('electionStartTime'); // Get from localStorage
+        let electionEndTime = localStorage.getItem('electionEndTime');   // Get from localStorage
+        let countdownInterval = null;
+
+        // Check if times are in localStorage and initialize if so
+        if (electionStartTime && electionEndTime) {
+            electionStartTime = new Date(electionStartTime);
+            electionEndTime = new Date(electionEndTime);
+            initializeCountdown(); // Start countdown immediately
+        }
+
+        function setElectionTimes() {
+            const startTimeInput = document.getElementById("start-time").value;
+            const endTimeInput = document.getElementById("end-time").value;
+
+            if (startTimeInput && endTimeInput) {
+                electionStartTime = new Date(startTimeInput);
+                electionEndTime = new Date(endTimeInput);
+
+                // Store in localStorage
+                localStorage.setItem('electionStartTime', electionStartTime.toISOString());
+                localStorage.setItem('electionEndTime', electionEndTime.toISOString());
+
+                // Set the status text
+                document.getElementById('time-status').textContent = "Election start and end times have been set.";
+                document.getElementById('time-setting').classList.add("hidden");
+                document.getElementById('countdown-section').classList.remove("hidden");
+
+                // Display start and end times
+                document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
+                document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
+
+                updateCountdown();
+                startVoting();
+            } else {
+                alert("Please select valid start and end date/time.");
+            }
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = electionEndTime - now;
+
+            if (timeLeft <= 0) {
+                document.getElementById('countdown').textContent = "Election Ended";
+                clearInterval(countdownInterval);
+            } else {
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                document.getElementById('countdown').textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+        }
+
+        function startVoting() {
+            document.getElementById("set-time-btn").disabled = true;
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        function cancelElectionTime() {
+            electionStartTime = null;
+            electionEndTime = null;
+
+            // Remove from localStorage
+            localStorage.removeItem('electionStartTime');
+            localStorage.removeItem('electionEndTime');
+
+            document.getElementById('time-setting').classList.remove("hidden");
+            document.getElementById('countdown-section').classList.add("hidden");
+
+            document.getElementById('set-time-btn').disabled = false;
+            document.getElementById('time-status').textContent = "Election time has been cancelled.";
+            clearInterval(countdownInterval);
+        }
+
+        function modifyElectionTime() {
+            document.getElementById('time-setting').classList.remove("hidden");
+            document.getElementById('countdown-section').classList.add("hidden");
+
+            document.getElementById('set-time-btn').disabled = false;
+        }
+
+        function initializeCountdown() {
+            document.getElementById('time-setting').classList.add("hidden"); // Hide settings
+            document.getElementById('countdown-section').classList.remove("hidden"); // Show countdown
+            document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
+            document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
+            updateCountdown();
+            startVoting();
+        }
+
+        // Event listeners
+        document.getElementById('set-time-btn').addEventListener('click', setElectionTimes);
+        document.getElementById('cancel-time-btn').addEventListener('click', cancelElectionTime);
+        document.getElementById('modify-time-btn').addEventListener('click', modifyElectionTime);
+
+        // Initial countdown message (before time is set or loaded)
+        if (!electionStartTime || !electionEndTime) {
+            document.getElementById('countdown').textContent = "Please set the election time.";
+        }
+    </script>
+</body>
+
+</html>

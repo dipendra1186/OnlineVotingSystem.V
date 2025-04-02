@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Voting System - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-blue-900 text-white p-5">
+            <h2 class="text-xl font-bold">Voting Dashboard</h2>
+            <ul class="mt-6">
+                <li class="py-2"><a href="Dash.html" class="hover:text-gray-300">Go to Dashboard</a></li>
+                <li class="py-2"><a href="candidate.html" class="hover:text-gray-300">Manage Candidates</a></li>
+                <li class="py-2"><a href="Vote.html" class="hover:text-gray-300">Manage Vote</a></li>
+                <li class="py-2"><a href="countdown.html" class="hover:text-gray-300">Election Time Countdown</a></li>
+                <li class="py-2"><a href="results.html" class="hover:text-gray-300">Results</a></li>
+            </ul>
+            <a href="login.html">
+                <button class="mt-6 bg-red-500 px-4 py-2 rounded text-white w-full">Logout</button>
+            </a>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <h1 class="text-2xl font-bold">Dashboard Overview</h1>
+            <div class="grid grid-cols-3 gap-6 mt-4">
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg">Total Voters</h3>
+                    <p class="text-2xl font-bold" id="totalVoters">0</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg">Total Candidates</h3>
+                    <p class="text-2xl font-bold" id="totalCandidates">0</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg">Votes Cast</h3>
+                    <p class="text-2xl font-bold" id="votesCast">0</p>
+                </div>
+            </div>
+
+            <!-- Election Time Countdown -->
+            <div class="bg-white p-6 mt-6 shadow rounded">
+                <h2 class="text-xl font-bold">Election Countdown</h2>
+                <p id="countdown" class="text-2xl font-bold">Loading...</p>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-white p-6 mt-6 shadow rounded">
+                <h2 class="text-xl font-bold">Live Vote Count</h2>
+                <canvas id="voteChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Modal -->
+    <div id="celebrationModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-8 rounded shadow-lg text-center">
+            <h2 class="text-3xl font-bold text-green-600">Congratulations!</h2>
+            <p class="text-xl mt-4" id="winnerName">Winner: Candidate Name</p>
+            <button id="closeModalBtn" class="mt-6 bg-red-500 px-4 py-2 rounded text-white">Close</button>
+        </div>
+    </div>
+
+    <script>
+
+        // Function to fetch total voters from the backend API
+            async function fetchTotalVoters() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/totalVoters');
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log("API Response:", data);
+                        const totalVoters = data.totalVoters || 0; // Ensure totalVoters exists
+                        document.getElementById('totalVoters').innerText = totalVoters;
+                    } else {
+                        console.error('Failed to fetch total voters');
+                    }
+                } catch (error) {
+                    console.error('Error fetching total voters:', error);
+                }
+            }
+
+            // Call the function when the page is loaded
+            document.addEventListener('DOMContentLoaded', fetchTotalVoters);
+
+            // Fetch the candidate data and display the total number of candidates
+            document.addEventListener('DOMContentLoaded', () => {
+                const candidateCountElement = document.getElementById('totalCandidates');  // Changed this to 'totalCandidates'
+
+                // Fetch candidates from the API
+                fetch('http://localhost:3000/api/candidates')  // Make sure the URL is correct
+                    .then(response => response.json())
+                    .then(data => {
+                        // Display the number of candidates
+                        const totalCandidates = data.length; // Length of the array represents total candidates
+                        candidateCountElement.textContent = totalCandidates;
+                    })
+                    .catch(err => {
+                        console.error('Error fetching candidates:', err);
+                        candidateCountElement.textContent = 'Error fetching data';
+                    });
+            });
+
+        // Fetch dynamic data from localStorage
+        const votes = JSON.parse(localStorage.getItem('votes')) || {};
+        const electionEndTime = new Date(localStorage.getItem('electionEndTime')) || new Date();
+
+        // Election Countdown Timer
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = electionEndTime - now;
+
+            if (timeLeft <= 0) {
+                document.getElementById('countdown').textContent = "Election Ended";
+                clearInterval(countdownInterval);
+
+                // Show winner celebration
+                showWinnerCelebration();
+                return;
+            }
+
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        const countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Prepare chart data
+        const candidates = JSON.parse(localStorage.getItem('candidates')) || [];
+        const ctx = document.getElementById('voteChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: candidates.map(c => c.name),
+                datasets: [{
+                    label: 'Votes',
+                    data: candidates.map(c => votes[c.name] || 0),
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF5733', '#8E44AD']
+                }]
+            }
+        });
+
+        // Update votes and show celebration after a vote
+        function updateVotes(candidateName) {
+            votes[candidateName] = votes[candidateName] ? votes[candidateName] + 1 : 1;
+
+            // Save votes and update the votes cast count
+            localStorage.setItem('votes', JSON.stringify(votes));
+
+            // Update the chart dynamically
+            chart.data.datasets[0].data = candidates.map(c => votes[c.name] || 0);
+            chart.update();
+        }
+
+        // Show winner celebration
+        function showWinnerCelebration() {
+            const winner = candidates.reduce((prev, current) => (votes[current.name] || 0) > (votes[prev.name] || 0) ? current : prev);
+            document.getElementById('winnerName').textContent = `Winner: ${winner.name}`;
+            document.getElementById('celebrationModal').classList.remove('hidden');
+        }
+
+        // Close the celebration modal
+        document.getElementById('closeModalBtn').addEventListener('click', function () {
+            document.getElementById('celebrationModal').classList.add('hidden');
+        });
+
+        // Example of vote button click handling
+        document.getElementById('vote-btn').addEventListener('click', function () {
+            const selectedCandidate = document.querySelector('input[name="candidate"]:checked');
+            if (selectedCandidate) {
+                const candidateName = candidates[selectedCandidate.value].name;
+                updateVotes(candidateName);
+                alert(`You voted for ${candidateName}`);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

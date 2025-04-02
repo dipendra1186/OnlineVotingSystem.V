@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password</title>
+    <style>
+        .forgot-password-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        .forgot-password-panel {
+            width: 100%;
+            max-width: 400px;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .forgot-password-panel h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .forgot-password-panel p {
+            margin-bottom: 30px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .forgot-password-panel label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            text-align: left;
+        }
+
+        .forgot-password-panel input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .forgot-password-panel button {
+            width: 100%;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .forgot-password-panel button:hover {
+            background-color: #0056b3;
+        }
+
+        .forgot-password-panel .back-to-login {
+            margin-top: 20px;
+        }
+
+        .forgot-password-panel .back-to-login a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .forgot-password-panel .back-to-login a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="forgot-password-container">
+        <div class="forgot-password-panel">
+            <h2>Forgot Your Password?</h2>
+            <p>Please enter your Voter ID to receive a password reset token.</p>
+            <form onsubmit="handleForgotPassword(event)">
+                <label for="voterID">Voter ID</label>
+                <input type="text" id="voterID" name="voterID" placeholder="Enter your Voter ID" required>
+
+                <button type="submit">Send Reset Token</button>
+            </form>
+            <p class="back-to-login">
+                <a href="login.html">Back to Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+
+            const voterID = document.getElementById('voterID').value;
+            const submitButton = event.target.querySelector('button');
+            submitButton.disabled = true; // Disable the button to prevent multiple submissions
+
+            try {
+                const response = await fetch('http://localhost:3000/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterID })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Password reset token has been sent to your email');
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Error: Unable to connect to the API');
+                console.error('Error:', error);
+            } finally {
+                submitButton.disabled = false; // Enable the button again after the request is completed
+            }
+        }
+    </script>
+</body>
+
+</html>

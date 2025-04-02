@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results - Voting System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+        /* Large Celebration Banner Style */
+        .celebration-banner {
+            background-color: #28a745;
+            color: white;
+            padding: 20px;
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9999;
+            display: none;
+        }
+
+        /* Winning Candidate Announcement */
+        .winning-announcement {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 100px;
+            text-align: center;
+            color: #ff5722;
+        }
+
+        /* Confetti Style */
+        #confettiCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-blue-900 text-white p-5">
+            <h2 class="text-xl font-bold">Voting Dashboard</h2>
+            <ul class="mt-6">
+                <li class="py-2"><a href="Dash.html" class="hover:text-gray-300">Go to Dashboard</a></li>
+                <li class="py-2"><a href="candidate.html" class="hover:text-gray-300">Manage Candidates</a></li>
+                <li class="py-2"><a href="Vote.html" class="hover:text-gray-300">Manage Vote</a></li>
+                <li class="py-2"><a href="countdown.html" class="hover:text-gray-300">Election Time Countdown</a></li>
+                <li class="py-2"><a href="results.html" class="hover:text-gray-300">Results</a></li>
+            </ul>
+            <button class="mt-6 bg-red-500 px-4 py-2 rounded text-white w-full">Logout</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <h1 class="text-2xl font-bold">Election Results</h1>
+
+            <!-- Results Section -->
+            <div class="bg-white p-6 mt-6 shadow rounded">
+                <h2 class="text-xl font-bold">Live Vote Count</h2>
+                <canvas id="voteChart"></canvas>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="bg-white p-6 mt-6 shadow rounded">
+                <h3 class="text-lg font-semibold">Summary</h3>
+                <div id="resultsSummary" class="mt-4">
+                    <!-- Dynamic results will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 text-center">
+                <a href="dashboard.html" class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700">Back to
+                    Dashboard</a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Celebration Banner -->
+    <div id="celebration-banner" class="celebration-banner">
+        🎉 The Election has Ended! 🎉
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <script>
+        // Fetch dynamic data
+        const candidates = JSON.parse(localStorage.getItem('candidates')) || [];
+        const votes = JSON.parse(localStorage.getItem('votes')) || {};
+
+        // Prepare chart data
+        const ctx = document.getElementById('voteChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: candidates.map(c => c.name),
+                datasets: [{
+                    label: 'Votes',
+                    data: candidates.map(c => votes[c.name] || 0),
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF5733', '#8E44AD']
+                }]
+            }
+        });
+
+        // Display summary of results
+        const resultsSummary = document.getElementById('resultsSummary');
+        candidates.forEach(candidate => {
+            const voteCount = votes[candidate.name] || 0;
+            const resultItem = document.createElement('div');
+            resultItem.classList.add('mb-4');
+            resultItem.innerHTML = `
+                <div class="flex justify-between">
+                    <span class="font-medium">${candidate.name}</span>
+                    <span class="font-bold">${voteCount} votes</span>
+                </div>
+                <div class="w-full bg-gray-200 h-2 mt-1 rounded-full">
+                    <div class="h-2 rounded-full" style="width: ${voteCount / Math.max(...Object.values(votes)) * 100}%"></div>
+                </div>
+            `;
+            resultsSummary.appendChild(resultItem);
+        });
+
+        // Election end time check and celebration
+        const electionEndTime = new Date(localStorage.getItem('electionEndTime'));
+        const now = new Date();
+
+        if (now >= electionEndTime) {
+            // Show celebration banner
+            document.getElementById('celebration-banner').style.display = 'block';
+
+            // Get the winning candidate
+            const winner = candidates.reduce((prev, current) => {
+                return (votes[prev.name] > votes[current.name]) ? prev : current;
+            });
+
+            // Display the winning candidate
+            const winningAnnouncement = document.createElement('div');
+            winningAnnouncement.classList.add('winning-announcement');
+            winningAnnouncement.innerHTML = `
+                <h2>And the Winner is: ${winner.name}!</h2>
+                <p>Votes: ${votes[winner.name] || 0}</p>
+            `;
+            document.body.appendChild(winningAnnouncement);
+
+            // Trigger confetti effect
+            canvasConfetti();
+        }
+
+        // Confetti effect function
+        function canvasConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const context = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            for (let i = 0; i < 200; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 8 + 4,
+                    color: ['#ff0', '#f0f', '#0ff', '#ff6347', '#32cd32'][Math.floor(Math.random() * 5)],
+                    speedX: Math.random() * 6 - 3,
+                    speedY: Math.random() * 6 - 3
+                });
+            }
+
+            function update() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    context.beginPath();
+                    context.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    context.fillStyle = p.color;
+                    context.fill();
+                });
+                requestAnimationFrame(update);
+            }
+            update();
+        }
+    </script>
+</body>
+
+</html>

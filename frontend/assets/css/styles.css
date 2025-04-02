@@ -1,0 +1,223 @@
+ 
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body and Layout */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 500px;
+    width: 100%;
+    padding: 30px;
+    background-color: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Typography */
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 24px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #007BFF;
+    outline: none;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+}
+
+
+/* "Sign Up" Button Style */
+.signup-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.signup-btn:hover {
+    background-color: #218838;
+    /* Reversed gradient on hover */
+    transform: translateY(-3px);
+}
+
+.signup-btn:active {
+    transform: translateY(0);
+    /* Button resets on click */
+}
+
+/* Voter ID Field with Generate Button */
+.voter-id-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.voter-id-group input {
+    flex: 1;
+}
+
+.voter-id-group button {
+    width: auto;
+    padding: 10px 15px;
+    font-size: 14px;
+}
+
+/* Link Styles */
+.text-center {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+}
+
+.text-center a {
+    color: #007BFF;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.text-center a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* OTP Section */
+#otp-section {
+    margin-top: 24px;
+    text-align: center;
+    animation: slideIn 0.5s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#otp-section h3 {
+    margin-bottom: 16px;
+    font-size: 20px;
+    color: #333;
+}
+
+#otp-section input {
+    width: 60%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#otp-section input:focus {
+    border-color: #007BFF;
+    outline: none;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+}
+
+#otp-section button {
+    width: 60%;
+    margin-top: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    .form-group input,
+    .form-group select,
+    button {
+        font-size: 14px;
+    }
+
+    #otp-section input,
+    #otp-section button {
+        width: 80%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    #otp-section input,
+    #otp-section button {
+        width: 100%;
+    }
+}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Online Voting System</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .image-side {
+            flex: 1.5;
+            position: relative;
+        }
+
+        .image-side img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-side .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .image-side h1 {
+            margin-bottom: 10px;
+        }
+
+        .login-side {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #ce1126, #ffffff 40%, #003893);
+        }
+
+        .login-box {
+            width: 400px;
+            background-color: rgb(251, 248, 248);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .login-box p {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-box label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .login-box input[type="text"],
+        .login-box input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            background-color: #0056b3;
+        }
+
+        .login-box .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-box .links a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .login-box .links a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="image-side">
+            <img src="../assets/images/vote.jpg" alt="Voting System Image">
+            <div class="overlay">
+                <h1>Voting System</h1>
+                <p>Secure, transparent, and accessible voting for everyone.</p>
+            </div>
+        </div>
+        <div class="login-side">
+            <div class="login-box">
+                <h2>Welcome back</h2>
+                <p>Sign in to access the voting system</p>
+                <form onsubmit="handleLogin(event)">
+                    <label for="voterID">ID</label>
+                    <input type="text" id="voterID" name="voterID" placeholder="Enter your ID" required>
+
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter Password" required>
+
+                    <button type="submit">Sign In</button>
+                </form>
+                <div class="links">
+                    <a href="./" style="display: block; margin-bottom: 10px;">Forgot Password?</a>
+                    <a href="./signup.html" font-weight: bold;">Don't have an account? Sign Up</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const voterIDField = document.getElementById('voterID');
+            const passwordField = document.getElementById('password');
+
+            const userData = {
+                voterID: voterIDField.value,
+                password: passwordField.value
+            };
+
+            // Clear input fields before sending request
+            voterIDField.value = '';
+            passwordField.value = '';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = 'Dash.html';
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Error: Unable to connect to the API');
+                console.error('Error:', error);
+            }
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+
+            const voterIDField = document.getElementById('voterID');
+            const voterID = voterIDField.value;
+
+            if (!voterID) {
+                alert('Please enter your ID before requesting a password reset.');
+                return;
+            }
+
+            // Clear field immediately
+            voterIDField.value = '';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterID })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Password reset token has been sent to your email');
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Error: Unable to connect to the API');
+                console.error('Error:', error);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

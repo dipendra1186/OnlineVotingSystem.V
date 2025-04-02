@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Online Voting System</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <form id="signup-form">
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" required>
+                    <option value="voter">Voter</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" placeholder="Enter your age" required>
+            </div>
+            <div class="form-group">
+                <label for="religion">Religion</label>
+                <select id="religion" required>
+                    <option value="Hindu">Hindu</option>
+                    <option value="Muslim">Muslim</option>
+                    <option value="Christian">Christian</option>
+                    <option value="Buddhist">Buddhist</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="passwordReg">Password</label>
+                <input type="password" id="passwordReg" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="signup-btn">Sign Up</button>
+            <div class="text-center">
+                Already have an account? <a href="./login">Login here</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Function to generate a random 5-digit voterID or adminID
+        function generateUserID(role) {
+            const nameParts = document.getElementById('name').value.split(' ');
+            const firstNameInitial = nameParts[0].charAt(0).toUpperCase();
+            const lastNameInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+            const uniqueID = `${firstNameInitial}${lastNameInitial}${Math.floor(10000 + Math.random() * 90000)}`; // Example: DT47856
+            return uniqueID;
+        }
+
+        // Event listener for form submission
+        document.getElementById('signup-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const userData = {
+                role: document.getElementById('role').value,
+                userID: generateUserID(document.getElementById('role').value),  // Dynamically generate ID
+                fullName: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                religion: document.getElementById('religion').value,
+                gender: document.getElementById('gender').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('passwordReg').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Store the userID returned from the backend response
+                    localStorage.setItem('userID', data.userID);  // Store voterID or adminID
+                    localStorage.setItem('userEmail', userData.email);  // Store email to be used on OTP page if needed
+                    alert("OTP Sent to your email address");
+                    window.location.href = 'otp.html'; // Redirect to OTP page
+                } else {
+                    alert(data.message); // Display error message
+                }
+            } catch (error) {
+                alert('Error: Unable to connect to the API');
+                console.error('Error:', error);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
