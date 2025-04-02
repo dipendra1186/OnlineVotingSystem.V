@@ -1,4 +1,17 @@
+# Ignore sensitive environment variables
 .env
+
+# Ignore node modules
+node_modules/
+
+# Ignore package-lock files
 package-lock.json
+
+# Ignore package.json files
 package.json
+
+# Ignore index.js file
 index.js
+
+# Ignore uploads directory
+backend/uploads/
