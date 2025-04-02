@@ -1,0 +1,84 @@
+/* Centering the entire page */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+.container {
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    text-align: center;
+}
+
+.otp-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px 0;
+}
+
+.otp-input {
+    width: 50px;
+    height: 60px;
+    font-size: 24px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    background-color: #f8f9fa;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.otp-input:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+.timer-container,
+.resend-otp {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+.verify-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.verify-btn:hover {
+    background-color: #45a049;
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 16px;
+}
+
+.resend-btn:hover {
+    color: #2980b9;
+}
+
+.email-display {
+    background-color: #e8f4fd;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    color: #2c3e50;
+}

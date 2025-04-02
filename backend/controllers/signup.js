@@ -43,61 +43,66 @@ async function generateUniqueID(role, fullName, connection) {
 const createCustomer = async (req, res) => {
     try {
         const { fullName, age, religion, gender, email, password, role } = req.body;
-
         if (!fullName || !age || !religion || !gender || !email || !password || !role) {
             return res.status(400).json({ message: 'All fields are required' });
         }
-
         const ageNum = parseInt(age);
         if (isNaN(ageNum) || ageNum < 18) {
             return res.status(400).json({ message: 'Age must be 18 or above' });
         }
-
         const connection = await connectDB();
-
+        // Extract first and last name
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts[nameParts.length - 1];
+        
+        // Create the modified email with initials
+        // Get first letter of first name and first letter of last name
+        const firstInitial = firstName.charAt(0).toLowerCase();
+        const lastInitial = lastName.charAt(0).toLowerCase();
+        const modifiedEmail = `${email}-${firstInitial}${lastInitial}`;
+        
         const [existingUser] = await connection.execute(
             `SELECT * FROM ${role === "Admin" ? "admins" : "voters"} WHERE email = ?`, 
-            [email]
+            [modifiedEmail]
         );
         if (existingUser.length > 0) {
             return res.status(400).json({ message: 'Email already exists' });
         }
-
         const userID = await generateUniqueID(role, fullName, connection);
         console.log(`Generated User ID: ${userID}`);
-
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiry = new Date();
         otpExpiry.setMinutes(otpExpiry.getMinutes() + 10);
-
         const insertQuery = role === "Admin" 
             ? `INSERT INTO admins (fullName, age, religion, gender, email, password, adminID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
             : `INSERT INTO voters (fullName, age, religion, gender, email, password, voterID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
         const [result] = await connection.execute(insertQuery, [
-            fullName, ageNum, religion, gender, email, hashedPassword, userID, otp, otpExpiry
+            fullName, ageNum, religion, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry
         ]);
         console.log(`Inserted user with ID: ${userID}`);
-
         await sendOTP(email, otp, userID, role);
-
-        res.status(200).json({ success: true, message: `User registered successfully as ${role}. Check your email for your ${role === "Admin" ? "Admin ID" : "Voter ID"}.`, userID: userID });
-
+        res.status(200).json({ 
+            success: true, 
+            message: `User registered successfully as ${role}. Check your email for your ${role === "Admin" ? "Admin ID" : "Voter ID"}.`, 
+            userID: userID 
+        });
     } catch (error) {
         console.error("Error in createCustomer:", error);
         res.status(500).json({ success: false, message: 'Registration failed. Please try again.', error: error.message });
     }
 };
 
+
+
 const sendOTP = async (email, otp, userID, role) => {
     try {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: process.env.EMAIL_USER,  
-                pass: process.env.EMAIL_PASS,            
+                user: 'timalsinadipendra125@gmail.com',
+                pass: 'gtfc mlza rgzr vlwx',           
             },
         });
 
