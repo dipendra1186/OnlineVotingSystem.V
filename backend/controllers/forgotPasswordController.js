@@ -1,94 +1,103 @@
 require('dotenv').config();
-const mysql = require('mysql2/promise');
 const nodemailer = require("nodemailer");
-const crypto = require("crypto");  // Using crypto for secure token generation
+const crypto = require("crypto");
+const db = require('../config/db');
 
-// Database connection function
-const connectDB = async () => {
-    try {
-        const connection = await mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASS,
-            database: process.env.DB_NAME
-        });
-        console.log("Connected to the database.");
-        return connection;
-    } catch (error) {
-        console.error("Database connection failed:", error);
-        throw new Error('Database connection error');
-    }
+// Generate a secure reset token
+const generateResetToken = () => crypto.randomBytes(32).toString('hex');
+
+// Normalize email (handle Gmail suffixes)
+const cleanEmail = (email) => {
+    if (!email) return email;
+    const match = email.match(/^([^@]+)@(gmail\.com)(-.*)?$/i);
+    return match ? `${match[1].split('-')[0]}@gmail.com` : email;
 };
 
-// Generate secure reset token using crypto
-const generateResetToken = () => {
-    return crypto.randomBytes(32).toString('hex');  // Secure random token
-};
-
-// Helper function to send reset token via email
-const sendResetEmail = async (email, token, voterID) => {
+// Send reset email
+const sendResetEmail = async (email, token, ID) => {
     const transporter = nodemailer.createTransport({
-        service: 'gmail',  // Or use another email provider
+        service: "gmail",
         auth: {
             user: 'timalsinadipendra125@gmail.com',
-            pass: 'gtfc mlza rgzr vlwx',  // Use an environment variable for the password
+pass: 'gtfc mlza rgzr vlwx',
         },
     });
 
+    const resetLink = `http://localhost:3000/reset-password?token=${encodeURIComponent(token)}&ID=${encodeURIComponent(ID)}`;
+
     const mailOptions = {
-        from: process.env.EMAIL_USER,  // Sender's email address from .env
+        from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Password Reset Request',
+        subject: "Password Reset Request",
         html: `
-            <p>Click the following link to reset your password:</p>
-            <a href="http://localhost:3000/reset-password?token=${token}&voterID=${voterID}">Reset Password</a>
+            <p>Hello,</p>
+            <p>You requested a password reset.</p>
+            <p>Click the link below to reset your password:</p>
+            <a href="${resetLink}">Reset Password</a>
             <p>This link will expire in 30 minutes.</p>
+            <p>Your ID: ${ID}</p>
+            <p>If you didn't request this, please ignore this email.</p>
         `,
     };
 
     try {
         await transporter.sendMail(mailOptions);
-    } catch (emailError) {
-        console.error("Error sending email:", emailError);
+    } catch (error) {
+        console.error("Error sending email:", error);
         throw new Error('Error sending email');
     }
 };
 
-
 // Forgot password function
 const forgotPassword = async (req, res) => {
-    const { voterID } = req.body;
+    const { ID } = req.body;
+    if (!ID) return res.status(400).json({ success: false, message: "ID is required." });
 
+    let connection;
     try {
-        // Connect to the database
-        const connection = await connectDB();
+        connection = await db.getConnection();
+        const firstLetter = ID[0].toUpperCase();
+        const tablesToCheck = firstLetter === 'V'
+            ? [{ table: 'voters', idColumn: 'voterID' }, { table: 'admins', idColumn: 'adminID' }]
+            : [{ table: 'admins', idColumn: 'adminID' }, { table: 'voters', idColumn: 'voterID' }];
 
-        // Find user by voterID
-        const [users] = await connection.execute('SELECT * FROM users WHERE voterID = ?', [voterID]);
+        let userFound = false, userEmail = '', table = '', idColumn = '';
 
-        if (users.length === 0) {
-            return res.status(404).json({ success: false, message: "User not found!" });
+        for (const tableInfo of tablesToCheck) {
+            const [users] = await connection.execute(
+                `SELECT email FROM ${tableInfo.table} WHERE ${tableInfo.idColumn} = ?`, 
+                [ID]
+            );
+            if (users.length > 0) {
+                userFound = true;
+                userEmail = users[0].email;
+                table = tableInfo.table;
+                idColumn = tableInfo.idColumn;
+                break;
+            }
         }
 
-        const user = users[0];  // Assuming the first user is the one we're looking for
+        if (!userFound) return res.status(404).json({ success: false, message: "User not found!" });
 
-        // Generate a secure reset token
+        const normalizedEmail = cleanEmail(userEmail);
         const resetToken = generateResetToken();
-
-        // Update user's reset token and expiration time in the database
         const resetTokenExpiry = new Date();
-        resetTokenExpiry.setMinutes(resetTokenExpiry.getMinutes() + 30);  // Token expires in 30 minutes
+        resetTokenExpiry.setMinutes(resetTokenExpiry.getMinutes() + 30);
 
-        await connection.execute('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE voterID = ?', [resetToken, resetTokenExpiry, voterID]);
+        await connection.execute(
+            `UPDATE ${table} SET resetToken = ?, resetTokenExpiry = ? WHERE ${idColumn} = ?`,
+            [resetToken, resetTokenExpiry, ID]
+        );
 
-        // Send the reset token to the user's email
-        await sendResetEmail(user.email, resetToken);
+        await sendResetEmail(normalizedEmail, resetToken, ID);
 
         res.status(200).json({ success: true, message: "Password reset token has been sent to your email." });
 
     } catch (error) {
         console.error("Error in forgot-password:", error);
         res.status(500).json({ success: false, message: "Server error. Please try again later." });
+    } finally {
+        if (connection) connection.release();
     }
 };
 

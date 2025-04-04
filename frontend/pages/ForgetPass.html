@@ -72,6 +72,7 @@
         }
 
         .forgot-password-panel .back-to-login {
+            font-size: 20px;
             margin-top: 20px;
         }
 
@@ -91,15 +92,15 @@
     <div class="forgot-password-container">
         <div class="forgot-password-panel">
             <h2>Forgot Your Password?</h2>
-            <p>Please enter your Voter ID to receive a password reset token.</p>
+            <p>Please enter your ID to receive a password reset token.</p>
             <form onsubmit="handleForgotPassword(event)">
-                <label for="voterID">Voter ID</label>
-                <input type="text" id="voterID" name="voterID" placeholder="Enter your Voter ID" required>
+                <label for="ID">Your ID</label>
+                <input type="text" id="ID" name="ID" placeholder="Enter your ID (e.g., A......., V.......)" required>
 
                 <button type="submit">Send Reset Token</button>
             </form>
             <p class="back-to-login">
-                <a href="login.html">Back to Login</a>
+                <a href="/login">Back to Login</a>
             </p>
         </div>
     </div>
@@ -108,32 +109,50 @@
         async function handleForgotPassword(event) {
             event.preventDefault();
 
-            const voterID = document.getElementById('voterID').value;
+            
+
+            // Get the input value - using the correct ID
+            const ID = document.getElementById('ID').value.trim();
             const submitButton = event.target.querySelector('button');
-            submitButton.disabled = true; // Disable the button to prevent multiple submissions
+            submitButton.disabled = true; // Disable button to prevent multiple submissions
+
+            if (!ID) {
+                alert('Please enter your ID.');
+                submitButton.disabled = false;
+                return;
+            }
 
             try {
+                // Show loading state to give user feedback
+                submitButton.textContent = "Sending...";
+
                 const response = await fetch('http://localhost:3000/api/forgot-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ voterID })
+                    body: JSON.stringify({ ID })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Password reset token has been sent to your email');
+                    sessionStorage.setItem('resetID', ID); // Store ID only on success
+                    alert('Password reset token has been sent to your email. Please check your inbox.');
+                    // Optional: redirect to login page or show a success message
+                    // window.location.href = 'login.html';
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'An error occurred. Please try again.');
                 }
             } catch (error) {
-                alert('Error: Unable to connect to the API');
+                alert('Error: Unable to connect to the server. Please try again.');
                 console.error('Error:', error);
             } finally {
-                submitButton.disabled = false; // Enable the button again after the request is completed
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.textContent = "Send Reset Token";
             }
         }
     </script>
+
 </body>
 
 </html>

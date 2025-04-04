@@ -142,8 +142,8 @@
                     <button type="submit">Sign In</button>
                 </form>
                 <div class="links">
-                    <a href="./" style="display: block; margin-bottom: 10px;">Forgot Password?</a>
-                    <a href="./signup.html" font-weight: bold;">Don't have an account? Sign Up</a>
+                    <a href="/forgotpassword" style="display: block; margin-bottom: 10px;">Forgot Password?</a>
+                    <a href="/signup" font-weight: bold;">Don't have an account? Sign Up</a>
                 </div>
 
             </div>
@@ -158,13 +158,9 @@
             const passwordField = document.getElementById('password');
 
             const userData = {
-                voterID: voterIDField.value,
-                password: passwordField.value
+                voterID: voterIDField.value.trim(),
+                password: passwordField.value.trim()
             };
-
-            // Clear input fields before sending request
-            voterIDField.value = '';
-            passwordField.value = '';
 
             try {
                 const response = await fetch('http://localhost:3000/api/login', {
@@ -176,41 +172,11 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    window.location.href = 'Dash.html';
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('Error: Unable to connect to the API');
-                console.error('Error:', error);
-            }
-        }
+                    // Store user details in localStorage
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                        window.location.href = "/Dash.html";
 
-        async function handleForgotPassword(event) {
-            event.preventDefault();
-
-            const voterIDField = document.getElementById('voterID');
-            const voterID = voterIDField.value;
-
-            if (!voterID) {
-                alert('Please enter your ID before requesting a password reset.');
-                return;
-            }
-
-            // Clear field immediately
-            voterIDField.value = '';
-
-            try {
-                const response = await fetch('http://localhost:3000/api/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ voterID })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Password reset token has been sent to your email');
+                    
                 } else {
                     alert(data.message);
                 }
@@ -220,6 +186,7 @@
             }
         }
     </script>
+
 
 </body>
 
