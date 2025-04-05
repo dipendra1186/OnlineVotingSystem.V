@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex">
+    <!-- Sidebar -->
+    <div class="w-64 bg-blue-900 text-white p-5 min-h-screen">
+        <h2 class="text-xl font-bold">Voting Dashboard</h2>
+        <ul class="mt-6">
+            <li class="py-2"><a href="Dash.html" class="hover:text-gray-300">Go to Dashboard</a></li>
+            <li class="py-2"><a href="candidate.html" class="hover:text-gray-300">Manage Candidates</a></li>
+            <li class="py-2"><a href="Vote.html" class="hover:text-gray-300">Manage Vote</a></li>
+            <li class="py-2"><a href="countdown.html" class="hover:text-gray-300">Election Time Countdown</a></li>
+            <li class="py-2"><a href="results.html" class="hover:text-gray-300">Results</a></li>
+        </ul>
+        <button class="mt-6 bg-red-500 px-4 py-2 rounded text-white w-full">Logout</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+        <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Candidate Management</h2>
+
+            <!-- Add/Edit Candidate Form -->
+            <form id="candidateForm" class="bg-gray-50 p-6 rounded-lg shadow-md" enctype="multipart/form-data">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="candidateName" placeholder="Candidate Name" class="p-3 border rounded-lg"
+                        required>
+                    <input type="text" id="candidateParty" placeholder="Party Affiliation" class="p-3 border rounded-lg"
+                        required>
+                    <input type="number" id="candidateAge" placeholder="Age" class="p-3 border rounded-lg" required>
+                    <input type="text" id="candidateQualification" placeholder="Qualification"
+                        class="p-3 border rounded-lg" required>
+                    <input type="text" id="candidatePromises" placeholder="Promises if Elected"
+                        class="p-3 border rounded-lg" required>
+                    <div class="col-span-2">
+                        <input type="file" id="candidatePhoto" accept="image/*" class="p-3 border rounded-lg"
+                            onchange="previewPhoto(event)" required>
+                        <img id="photoPreview" class="mt-4 w-32 h-32 object-cover rounded-full hidden" />
+                    </div>
+                </div>
+                <button type="submit" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg">Add
+                    Candidate</button>
+            </form>
+
+            <!-- Candidate List -->
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full bg-white border rounded-lg shadow-md">
+                    <thead>
+                        <tr class="bg-blue-600 text-white">
+                            <th class="p-4 border">Photo</th>
+                            <th class="p-4 border">Name</th>
+                            <th class="p-4 border">Party</th>
+                            <th class="p-4 border">Age</th>
+                            <th class="p-4 border">Qualification</th>
+                            <th class="p-4 border">Promises</th>
+                            <th class="p-4 border">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidateList" class="text-gray-700">
+                        <!-- Candidate rows will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<script>
+    let editMode = false;
+    let editingCandidateId = null;
+
+    document.getElementById("candidateForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById("candidateName").value;
+        const party = document.getElementById("candidateParty").value;
+        const age = document.getElementById("candidateAge").value;
+        const qualification = document.getElementById("candidateQualification").value;
+        const promises = document.getElementById("candidatePromises").value;
+        const photoInput = document.getElementById("candidatePhoto").files[0];
+        const submitBtn = event.target.querySelector("button[type='submit']");
+
+        // Basic validation
+        if (!name || !party || !age || !qualification || !promises || (!photoInput && !editMode)) {
+            alert("Please fill in all fields and upload a photo.");
+            return;
+        }
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.textContent = editMode ? "Updating..." : "Uploading...";
+
+            let imageUrl = "";
+
+            // Upload image only if a new one is selected
+            if (photoInput) {
+                const formData = new FormData();
+                formData.append("file", photoInput);
+                formData.append("upload_preset", "ml_default");
+                formData.append("cloud_name", "dheesdhyx");
+
+                const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dheesdhyx/image/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const cloudData = await cloudRes.json();
+                if (cloudData.error) throw new Error(cloudData.error.message);
+
+                imageUrl = cloudData.secure_url;
+            }
+
+            const candidateData = {
+                name,
+                party,
+                age,
+                qualification,
+                promises,
+            };
+
+            if (imageUrl) {
+                candidateData.photo = imageUrl;
+            }
+
+            let url = "http://localhost:3000/api/candidates";
+            let method = "POST";
+
+            if (editMode) {
+                url += `/${editingCandidateId}`;
+                method = "PUT";
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(candidateData)
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Failed to save candidate");
+
+            alert(editMode ? "Candidate updated!" : "Candidate added!");
+            resetForm();
+            fetchCandidates();
+        } catch (error) {
+            console.error("Error submitting candidate:", error);
+            alert("Error: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = editMode ? "Update Candidate" : "Add Candidate";
+        }
+    });
+
+    function previewPhoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.getElementById("photoPreview");
+                img.src = e.target.result;
+                img.classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function fetchCandidates() {
+        try {
+            const res = await fetch("http://localhost:3000/api/candidates");
+            const candidates = await res.json();
+            const candidateList = document.getElementById("candidateList");
+            candidateList.innerHTML = "";
+
+            if (candidates.length === 0) {
+                candidateList.innerHTML = "<tr><td colspan='7' class='p-4 text-center text-gray-500'>No candidates found.</td></tr>";
+                return;
+            }
+
+            candidates.forEach(c => {
+                candidateList.innerHTML += `
+                    <tr>
+                        <td class='p-4 border'><img src='${c.photo}' class='w-16 h-16 object-cover rounded-full' /></td>
+                        <td class='p-4 border'>${c.name}</td>
+                        <td class='p-4 border'><span class='bg-blue-100 text-blue-800 px-2 py-1 rounded'>${c.party}</span></td>
+                        <td class='p-4 border'>${c.age}</td>
+                        <td class='p-4 border'>${c.qualification}</td>
+                        <td class='p-4 border'>${c.promises}</td>
+                        <td class='p-4 border'>
+                            <button class='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded mr-2' onclick='editCandidate(${JSON.stringify(c)})'>Edit</button>
+                            <button class='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded' onclick='deleteCandidate(${c.id})'>Delete</button>
+                        </td>
+                    </tr>`;
+            });
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    }
+
+    function editCandidate(candidate) {
+        editMode = true;
+        editingCandidateId = candidate.id;
+
+        document.getElementById("candidateName").value = candidate.name;
+        document.getElementById("candidateParty").value = candidate.party;
+        document.getElementById("candidateAge").value = candidate.age;
+        document.getElementById("candidateQualification").value = candidate.qualification;
+        document.getElementById("candidatePromises").value = candidate.promises;
+
+        const preview = document.getElementById("photoPreview");
+        preview.src = candidate.photo;
+        preview.classList.remove("hidden");
+
+        document.querySelector("button[type='submit']").textContent = "Update Candidate";
+    }
+
+    async function deleteCandidate(id) {
+        if (!confirm("Are you sure you want to delete this candidate?")) return;
+        try {
+            const res = await fetch(`http://localhost:3000/api/candidates/${id}`, {
+                method: "DELETE"
+            });
+            if (!res.ok) throw new Error("Failed to delete candidate.");
+            alert("Candidate deleted!");
+            fetchCandidates();
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Error deleting candidate.");
+        }
+    }
+
+    function resetForm() {
+        document.getElementById("candidateForm").reset();
+        document.getElementById("photoPreview").classList.add("hidden");
+        document.querySelector("button[type='submit']").textContent = "Add Candidate";
+        editMode = false;
+        editingCandidateId = null;
+    }
+
+    fetchCandidates(); // Load on page load
+</script>
+
+
+
+</body>
+
+</html>
