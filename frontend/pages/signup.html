@@ -16,6 +16,7 @@
                 <label for="role">Role</label>
                 <select id="role" required>
                     <option value="voter">Voter</option>
+                    <option value="admin">Admin</option>
                 </select>
             </div>
             <div class="form-group">
@@ -52,6 +53,10 @@
                 <label for="passwordReg">Password</label>
                 <input type="password" id="passwordReg" placeholder="Enter your password" required>
             </div>
+            <div class="form-group">
+                <label for="photo">Upload Photo (KYC)</label>
+                <input type="file" id="photo" accept="image/*" required>
+            </div>
             <button type="submit" class="signup-btn">Sign Up</button>
             <div class="text-center">
                 Already have an account? <a href="./login">Login here</a>
@@ -60,63 +65,83 @@
     </div>
 
     <script>
-        // Event listener for form submission
-            document.getElementById('signup-form').addEventListener('submit', async function (event) {
-                event.preventDefault();
+        const cloudName = "dheesdhyx"; // replace with your Cloudinary cloud name
+        const uploadPreset = "ml_default"; // replace with your upload preset
 
-                // Form validation
-                const fullName = document.getElementById('name').value;
-                const age = document.getElementById('age').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('passwordReg').value;
+        document.getElementById('signup-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
 
-                if (!fullName || !age || !email || !password) {
-                    alert('All fields are required');
-                    return;
+            const fullName = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('passwordReg').value;
+            const photoFile = document.getElementById('photo').files[0];
+
+            if (!fullName || !age || !email || !password || !photoFile) {
+                alert('All fields are required');
+                return;
+            }
+
+            if (parseInt(age) < 18) {
+                alert('Age must be 18 or above');
+                return;
+            }
+
+            // Upload image to Cloudinary
+            const formData = new FormData();
+            formData.append("file", photoFile);
+            formData.append("upload_preset", uploadPreset);
+
+            let photoUrl = "";
+
+            try {
+                const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const cloudinaryData = await cloudinaryRes.json();
+                photoUrl = cloudinaryData.secure_url;
+            } catch (err) {
+                alert("Photo upload failed. Please try again.");
+                return;
+            }
+
+            const role = document.getElementById('role').value === "admin" ? "Admin" : "Voter";
+
+            const userData = {
+                role: role,
+                fullName: fullName,
+                age: age,
+                religion: document.getElementById('religion').value,
+                gender: document.getElementById('gender').value,
+                email: email,
+                password: password,
+                photo: photoUrl
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('userID', data.userID);
+                    localStorage.setItem('userEmail', userData.email);
+                    alert("OTP Sent to your email address");
+                    window.location.href = './otp';
+                } else {
+                    alert(data.message);
                 }
-
-                if (parseInt(age) < 18) {
-                    alert('Age must be 18 or above');
-                    return;
-                }
-
-                // Convert role value to proper format expected by backend
-                const roleSelect = document.getElementById('role');
-                const role = roleSelect.value === "admin" ? "Admin" : "Voter";
-
-                const userData = {
-                    role: role,
-                    fullName: fullName,
-                    age: age,
-                    religion: document.getElementById('religion').value,
-                    gender: document.getElementById('gender').value,
-                    email: email,
-                    password: password
-                };
-
-                try {
-                    const response = await fetch('http://localhost:3000/api/signup', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(userData)
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        // Store the userID returned from the backend response
-                        localStorage.setItem('userID', data.userID);
-                        localStorage.setItem('userEmail', userData.email);  // Store original email (not the modified one)
-                        alert("OTP Sent to your email address");
-                        window.location.href = './otp'; // Redirect to OTP page
-                    } else {
-                        alert(data.message); // Display error message
-                    }
-                } catch (error) {
-                    alert('Error: Unable to connect to the API');
-                    console.error('Error:', error);
-                }
-            });
-
+            } catch (error) {
+                alert('Error: Unable to connect to the API');
+                console.error('Error:', error);
+            }
+        });
     </script>
 </body>
 
