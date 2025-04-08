@@ -1,14 +1,15 @@
 const db = require("../config/db");
 
 // Fetch total voters
-exports.totalVoters = async (req, res) => {
+exports.gettotalVoters = async (req, res) => {
     try {
-        const [rows] = await db.execute('SELECT COUNT(*) AS totalVoters FROM voters WHERE LOWER(role) = "voter"');
-        res.json(rows[0] || { totalVoters: 0 });
+        const [rows] = await db.execute('SELECT COUNT(*) AS totalVoters FROM voters');
+        res.status(200).json(rows[0] || { totalVoters: 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // Fetch all candidates
 exports.getCandidates = async (req, res) => {

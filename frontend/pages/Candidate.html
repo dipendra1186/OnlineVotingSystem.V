@@ -6,20 +6,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Management</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f1f5f9;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        position: fixed;
+        width: 250px;
+        height: 100vh;
+        background-color: #1e3a8a;
+        color: white;
+        padding: 2rem 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar h2 {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+        flex: 1;
+    }
+
+    .sidebar li {
+        margin: 1rem 0;
+    }
+
+    .sidebar a {
+        text-decoration: none;
+        color: white;
+        font-size: 1.1rem;
+        display: block;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+        background-color: #3b82f6;
+    }
+
+    .logout-btn {
+        margin-top: 2rem;
+        background-color: #ef4444;
+        border: none;
+        padding: 0.8rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .logout-btn:hover {
+        background-color: #dc2626;
+    }
+
+    .main-content {
+        margin-left: 250px;
+        padding: 2.5rem;
+        width: calc(100% - 250px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        box-sizing: border-box;
+    }
+
+    .main-content h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .bg-white {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .bg-white:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .bg-white h3 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .bg-white p {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .bg-white .text-2xl {
+        font-size: 1.5rem;
+    }
+
+    .bg-white .text-lg {
+        font-size: 1.2rem;
+    }
+
+    .shadow {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .mt-6 {
+        margin-top: 1.5rem;
+    }
+
+    .countdown {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    /* Chart Section */
+    canvas {
+        width: 100%;
+        height: 300px;
+        margin-top: 2rem;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 200px;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .main-content {
+            margin-left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar a {
+            font-size: 1rem;
+        }
+
+        .bg-white {
+            padding: 1rem;
+        }
+
+        .bg-white h3 {
+            font-size: 1rem;
+        }
+
+        .bg-white p {
+            font-size: 1.2rem;
+        }
+
+        .logout-btn {
+            padding: 0.7rem;
+            font-size: 1rem;
+        }
+    }
+</style>
+
 </head>
 
-<body class="bg-gray-100 flex">
-    <!-- Sidebar -->
-    <div class="w-64 bg-blue-900 text-white p-5 min-h-screen">
-        <h2 class="text-xl font-bold">Voting Dashboard</h2>
-        <ul class="mt-6">
-            <li class="py-2"><a href="Dash.html" class="hover:text-gray-300">Go to Dashboard</a></li>
-            <li class="py-2"><a href="candidate.html" class="hover:text-gray-300">Manage Candidates</a></li>
-            <li class="py-2"><a href="Vote.html" class="hover:text-gray-300">Manage Vote</a></li>
-            <li class="py-2"><a href="countdown.html" class="hover:text-gray-300">Election Time Countdown</a></li>
-            <li class="py-2"><a href="results.html" class="hover:text-gray-300">Results</a></li>
+<body>
+    <div class="sidebar">
+        <h2>Candidate Management</h2>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/Candidate">Manage Candidates</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/countdown">Countdown</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
         </ul>
-        <button class="mt-6 bg-red-500 px-4 py-2 rounded text-white w-full">Logout</button>
+        <button class="logout-btn">Logout</button>
     </div>
 
     <!-- Main Content -->

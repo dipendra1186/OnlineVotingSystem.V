@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar li {
+            margin: 1rem 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2.5rem;
+            width: calc(100% - 250px);
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .main-content h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .bg-white {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .bg-white:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .bg-white h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .bg-white p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        .profile-card {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .debug-info {
+            background-color: #fef9c3;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>User Profile Dashboard</h2>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/Candidate">Manage Candidates</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/countdown">Countdown</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
+        </ul>
+        <button class="logout-btn">Logout</button>
+    </div>
+
+    <div class="main-content">
+        <div class="profile-container">
+            <h2>User Profile</h2>
+            <div id="debug-info" class="debug-info">
+                <p><strong>Debug Info:</strong> <span id="debug-message">Initializing...</span></p>
+            </div>
+
+            <div class="profile-card">
+                <img id="user-photo" src="" alt="User Photo"
+                    style="width: 150px; height: 150px; object-fit: cover; border-radius: 20px; margin-bottom: 15px;" />
+                <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+                <p><strong>User ID:</strong> <span id="user-id">Loading...</span></p>
+                <p><strong>Full Name:</strong> <span id="user-name">Loading...</span></p>
+                <p><strong>Role:</strong> <span id="user-role">Loading...</span></p>
+                <p><strong>Verified:</strong> <span id="user-status">Loading...</span></p>
+            </div>
+
+            <div class="profile-actions">
+                <button id="logout-btn" class="btn-danger">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDebug(message) {
+            document.getElementById('debug-message').textContent = message;
+            console.log("Debug:", message);
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.profile-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.color = 'red';
+            errorDiv.style.padding = '10px';
+            errorDiv.style.marginBottom = '10px';
+            errorDiv.style.backgroundColor = '#ffeeee';
+            errorDiv.textContent = message;
+
+            container.insertBefore(errorDiv, container.firstChild);
+            setTimeout(() => errorDiv.remove(), 10000);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            updateDebug("DOM loaded. Checking local storage...");
+
+            const userID = localStorage.getItem('userID');
+            const userEmail = localStorage.getItem('userEmail');
+
+            if (!userID || !userEmail) {
+                updateDebug("User ID or email not found in localStorage");
+                showError("No user logged in. Redirecting to login page...");
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+                return;
+            }
+
+            updateDebug(`Found user ID: ${userID}, email: ${userEmail}`);
+            document.getElementById('user-id').textContent = userID + " (from localStorage)";
+            document.getElementById('user-email').textContent = userEmail + " (from localStorage)";
+
+            try {
+                updateDebug("Attempting to fetch profile data...");
+                const apiUrl = `http://localhost:3000/api/user/profile?id=${userID}`;
+                updateDebug(`Fetching from: ${apiUrl}`);
+
+                const response = await fetch(apiUrl);
+                updateDebug(`Response status: ${response.status}`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        throw new Error(errorData.message || "Failed to fetch profile");
+                    } catch (e) {
+                        throw new Error(`Server error: ${response.status}. Response: ${errorText}`);
+                    }
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const errorText = await response.text();
+                    throw new Error("Server returned non-JSON response");
+                }
+
+                const data = await response.json();
+                updateDebug(`Data received: ${JSON.stringify(data).substring(0, 100)}...`);
+
+                if (!data.success) {
+                    throw new Error(data.message || "Unknown error");
+                }
+
+                document.getElementById('user-id').textContent = data.user.id;
+
+                const emailParts = data.user.email.split('@');
+                let displayEmail = data.user.email;
+                if (emailParts.length === 2 && emailParts[1].includes('-')) {
+                    const domainClean = emailParts[1].split('-')[0];
+                    displayEmail = `${emailParts[0]}@${domainClean}.com`;
+                }
+                document.getElementById('user-email').textContent = displayEmail;
+
+                document.getElementById('user-name').textContent = data.user.name || 'N/A';
+                document.getElementById('user-role').textContent = data.user.role;
+                document.getElementById('user-status').textContent = data.user.isVerified ? '✅ Verified' : '❌ Not Verified';
+
+                document.getElementById('user-photo').src = data.user.photo || '../assets/img/default-avatar.png';
+
+                updateDebug("Profile data loaded successfully!");
+            } catch (err) {
+                updateDebug(`Error: ${err.message}`);
+                showError(`Error: ${err.message}`);
+                console.error("Profile fetch error:", err);
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                updateDebug("Logging out...");
+                localStorage.removeItem('userID');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                window.location.href = './login';
+            });
+        });
+    </script>
+</body>
+
+</html>

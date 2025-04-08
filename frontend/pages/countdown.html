@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Countdown - Voting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar li {
+            margin: 1rem 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2.5rem;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-content h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #1e3a8a;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .bg-white {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .bg-white:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .bg-white h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        .bg-white p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .bg-white .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .bg-white .text-lg {
+            font-size: 1.2rem;
+        }
+
+        .shadow {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        /* Chart Section */
+        canvas {
+            width: 100%;
+            height: 300px;
+            margin-top: 2rem;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+                padding: 1.5rem;
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+                box-sizing: border-box;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar a {
+                font-size: 1rem;
+            }
+
+            .bg-white {
+                padding: 1rem;
+            }
+
+            .bg-white h3 {
+                font-size: 1.2rem;
+            }
+
+            .bg-white p {
+                font-size: 1.3rem;
+            }
+
+            .logout-btn {
+                padding: 0.7rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Add additional styles for smoother user experience */
+        input[type="datetime-local"] {
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            width: 100%;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s;
+        }
+
+        input[type="datetime-local"]:focus {
+            border-color: #3b82f6;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Adjusting the Logout button for better appearance */
+        .logout-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Card view styling for Set Election Time */
+        #time-setting {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Add margin to avoid overlap with sidebar */
+        .main-content {
+            margin-left: 300px;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Welcome to Dashboard</h2>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/Candidate">Manage Candidates</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/countdown">Countdown</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
+        </ul>
+        <button class="logout-btn">Logout</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="text-3xl font-bold text-blue-900">Election Countdown</h1>
+
+        <div id="time-setting" class="bg-white p-6 mt-6 shadow rounded">
+            <h2 class="text-xl font-bold">Set Election Start and End Time</h2>
+            <div class="mt-4">
+                <label for="start-time" class="block text-gray-600">Election Start Date and Time</label>
+                <input type="datetime-local" id="start-time" class="mt-2 p-2 border rounded w-full" />
+            </div>
+            <div class="mt-4">
+                <label for="end-time" class="block text-gray-600">Election End Date and Time</label>
+                <input type="datetime-local" id="end-time" class="mt-2 p-2 border rounded w-full" />
+            </div>
+            <button id="set-time-btn" class="mt-4 bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700 w-full">Set
+                Election
+                Time</button>
+
+            <p id="time-status" class="mt-4 text-gray-600">Please set the election start and end time.</p>
+        </div>
+
+        <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded hidden">
+            <h2 class="text-xl font-bold">Time Remaining</h2>
+            <p id="countdown" class="text-4xl font-bold text-center">Loading...</p>
+            <p id="start-time-display" class="text-center mt-2 text-gray-600">Election Start: --:--</p>
+            <p id="end-time-display" class="text-center text-gray-600">Election End: --:--</p>
+            <div class="mt-4 flex justify-center">
+                <button id="cancel-time-btn"
+                    class="bg-red-500 px-4 py-2 text-white rounded hover:bg-red-700 mr-2">Cancel Election
+                    Time</button>
+                <button id="modify-time-btn"
+                    class="bg-yellow-500 px-4 py-2 text-white rounded hover:bg-yellow-700">Modify Election
+                    Time</button>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <script>
+        let electionStartTime = localStorage.getItem('electionStartTime'); // Get from localStorage
+        let electionEndTime = localStorage.getItem('electionEndTime');   // Get from localStorage
+        let countdownInterval = null;
+
+        // Check if times are in localStorage and initialize if so
+        if (electionStartTime && electionEndTime) {
+            electionStartTime = new Date(electionStartTime);
+            electionEndTime = new Date(electionEndTime);
+            initializeCountdown(); // Start countdown immediately
+        }
+
+        function setElectionTimes() {
+            const startTimeInput = document.getElementById("start-time").value;
+            const endTimeInput = document.getElementById("end-time").value;
+
+            if (startTimeInput && endTimeInput) {
+                electionStartTime = new Date(startTimeInput);
+                electionEndTime = new Date(endTimeInput);
+
+                // Store in localStorage
+                localStorage.setItem('electionStartTime', electionStartTime.toISOString());
+                localStorage.setItem('electionEndTime', electionEndTime.toISOString());
+
+                // Set the status text
+                document.getElementById('time-status').textContent = "Election start and end times have been set.";
+                document.getElementById('time-setting').classList.add("hidden");
+                document.getElementById('countdown-section').classList.remove("hidden");
+
+                // Display start and end times
+                document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
+                document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
+
+                updateCountdown();
+                startVoting();
+            } else {
+                alert("Please select valid start and end date/time.");
+            }
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = electionEndTime - now;
+
+            if (timeLeft <= 0) {
+                document.getElementById('countdown').textContent = "Election Ended";
+                clearInterval(countdownInterval);
+            } else {
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                document.getElementById('countdown').textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+        }
+
+        function startVoting() {
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        function initializeCountdown() {
+            document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
+            document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
+            document.getElementById('countdown-section').classList.remove("hidden");
+            updateCountdown();
+            startVoting();
+        }
+
+        // Event listeners
+        document.getElementById("set-time-btn").addEventListener("click", setElectionTimes);
+    </script>
+</body>
+
+</html>
