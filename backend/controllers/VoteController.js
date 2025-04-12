@@ -13,78 +13,55 @@ exports.getCandidates = async (req, res) => {
 // Get election start and end time
 exports.getElectionTime = async (req, res) => {
     try {
-        const [rows] = await db.execute("SELECT * FROM election_time");
+        const [rows] = await db.execute("SELECT * FROM election_times LIMIT 1");
+
         if (rows.length === 0) {
             return res.status(404).json({ message: "Election time not set." });
         }
 
+        const startTime = new Date(rows[0].start_time).toISOString();
+        const endTime = new Date(rows[0].end_time).toISOString();
+
         res.json({
-            start_time: rows[0].start_time,
-            end_time: rows[0].end_time,
+            start_time: startTime,
+            end_time: endTime,
         });
-    } catch (error) {
-        console.error("Error fetching election time:", error);
-        res.status(500).json({ message: "Failed to fetch election time" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Cast vote
 exports.castVote = async (req, res) => {
-    const { voterId, candidateID } = req.body;
+    const { voterID, candidateID } = req.body;
 
-    if (!voterId || !candidateID) {
-        return res.status(400).json({ message: "Voter ID and Candidate ID are required." });
+    if (!voterID || !candidateID) {
+        return res.status(400).json({ message: "Invalid vote data. Please ensure both voter ID and candidate are provided." });
     }
 
     try {
-        // Check if election is currently active
-        const [timeRows] = await db.execute("SELECT * FROM election_time");
-        if (timeRows.length > 0) {
-            const now = new Date();
-            const startTime = new Date(timeRows[0].start_time);
-            const endTime = new Date(timeRows[0].end_time);
+        console.log("Voter ID:", voterID, "Candidate ID:", candidateID);
 
-            if (now < startTime) {
-                return res.status(400).json({ message: "Election has not started yet." });
-            }
-            if (now > endTime) {
-                return res.status(400).json({ message: "Election has ended." });
-            }
-        }
+        const [voter] = await db.execute("SELECT has_voted FROM voters WHERE voterID = ?", [voterID]);
+        console.log("Voter Check Result:", voter);
 
-        // Check if voter exists
-        const [voterRows] = await db.execute("SELECT has_voted FROM voters WHERE id = ?", [voterId]);
-        if (voterRows.length === 0) {
+        if (voter.length === 0) {
             return res.status(404).json({ message: "Voter not found." });
         }
 
-        if (voterRows[0].has_voted) {
+        if (voter[0].has_voted === 1) {
             return res.status(400).json({ message: "You have already voted." });
         }
 
-        // Check if candidate exists
-        const [candidateRows] = await db.execute("SELECT id FROM candidates WHERE id = ?", [candidateID]);
-        if (candidateRows.length === 0) {
-            return res.status(404).json({ message: "Candidate not found." });
-        }
+        // Mark voter as voted
+        await db.execute("UPDATE voters SET has_voted = 1 WHERE voterID = ?", [voterID]);
 
-        // Start a transaction for data consistency
-        await db.beginTransaction();
+        // Correctly increment vote_count in candidates table
+        await db.execute("UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?", [candidateID]);
 
-        try {
-            // Record the vote
-            await db.execute("INSERT INTO votes (voter_id, candidate_id) VALUES (?, ?)", [voterId, candidateID]);
-            await db.execute("UPDATE voters SET has_voted = TRUE WHERE id = ?", [voterId]);
-            await db.execute("UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?", [candidateID]);
-            
-            await db.commit();
-            res.json({ message: "Vote cast successfully." });
-        } catch (error) {
-            await db.rollback();
-            throw error;
-        }
-    } catch (error) {
-        console.error("Vote error:", error);
-        res.status(500).json({ message: "An error occurred while casting the vote." });
+        res.json({ message: "Your vote has been cast successfully!" });
+    } catch (err) {
+        console.error("Error casting vote:", err);
+        res.status(500).json({ message: "Internal server error while casting vote." });
     }
 };
+

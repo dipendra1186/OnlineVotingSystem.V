@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Election Countdown - Voting System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <style>
         * {
             box-sizing: border-box;
@@ -308,76 +309,145 @@
     </div>
 
     <script>
-        let electionStartTime = localStorage.getItem('electionStartTime'); // Get from localStorage
-        let electionEndTime = localStorage.getItem('electionEndTime');   // Get from localStorage
-        let countdownInterval = null;
-
-        // Check if times are in localStorage and initialize if so
-        if (electionStartTime && electionEndTime) {
-            electionStartTime = new Date(electionStartTime);
-            electionEndTime = new Date(electionEndTime);
-            initializeCountdown(); // Start countdown immediately
+        function getAdminID() {
+            return localStorage.getItem('userID');
         }
 
-        function setElectionTimes() {
-            const startTimeInput = document.getElementById("start-time").value;
-            const endTimeInput = document.getElementById("end-time").value;
+        let startDate, endDate;
 
-            if (startTimeInput && endTimeInput) {
-                electionStartTime = new Date(startTimeInput);
-                electionEndTime = new Date(endTimeInput);
+        document.addEventListener('DOMContentLoaded', function () {
+            getElectionTime();
+            setInterval(updateCountdown, 1000);
+        });
 
-                // Store in localStorage
-                localStorage.setItem('electionStartTime', electionStartTime.toISOString());
-                localStorage.setItem('electionEndTime', electionEndTime.toISOString());
+        document.getElementById('set-time-btn').addEventListener('click', function () {
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const adminID = getAdminID();
 
-                // Set the status text
-                document.getElementById('time-status').textContent = "Election start and end times have been set.";
-                document.getElementById('time-setting').classList.add("hidden");
-                document.getElementById('countdown-section').classList.remove("hidden");
-
-                // Display start and end times
-                document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
-                document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
-
-                updateCountdown();
-                startVoting();
-            } else {
-                alert("Please select valid start and end date/time.");
+            if (!startTime || !endTime) {
+                showNotification('Please select both start and end time.', 'error');
+                return;
             }
+
+            if (new Date(endTime) <= new Date(startTime)) {
+                showNotification('End time must be after start time.', 'error');
+                return;
+            }
+
+            fetch('/api/countdown/set', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ adminID, startTime, endTime })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(data.message, 'success');
+                    if (data.message === "Election time set successfully") {
+                        startDate = new Date(startTime);
+                        endDate = new Date(endTime);
+                        displayCountdownUI(startTime, endTime);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showNotification('Failed to set election time.', 'error');
+                });
+        });
+
+        document.getElementById('cancel-time-btn').addEventListener('click', function () {
+            const adminID = getAdminID();
+            fetch(`/api/countdown/delete/${adminID}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(data.message, 'success');
+                    document.getElementById('countdown-section').classList.add('hidden');
+                    document.getElementById('time-status').textContent = 'Election time has been canceled.';
+                })
+                .catch(err => {
+                    console.error(err);
+                    showNotification('Failed to cancel election time.', 'error');
+                });
+        });
+
+        document.getElementById('modify-time-btn').addEventListener('click', function () {
+            document.getElementById('countdown-section').classList.add('hidden');
+            document.getElementById('time-status').textContent = 'Modify the election time below.';
+        });
+
+        function getElectionTime() {
+            const adminID = getAdminID();
+            fetch(`/api/countdown/get/${adminID}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.startTime && data.endTime) {
+                        startDate = new Date(data.startTime);
+                        endDate = new Date(data.endTime);
+                        displayCountdownUI(data.startTime, data.endTime);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showNotification('Failed to fetch election time.', 'error');
+                });
+        }
+
+        function displayCountdownUI(startTime, endTime) {
+            document.getElementById('countdown-section').classList.remove('hidden');
+            document.getElementById('start-time-display').textContent = `Election Start: ${formatDateTime(startTime)}`;
+            document.getElementById('end-time-display').textContent = `Election End: ${formatDateTime(endTime)}`;
         }
 
         function updateCountdown() {
+            if (!startDate || !endDate) return;
+
             const now = new Date();
-            const timeLeft = electionEndTime - now;
+            let countdownText = '';
 
-            if (timeLeft <= 0) {
-                document.getElementById('countdown').textContent = "Election Ended";
-                clearInterval(countdownInterval);
+            if (now < startDate) {
+                countdownText = getTimeRemaining(startDate, 'Election starts in:');
+            } else if (now >= startDate && now <= endDate) {
+                countdownText = getTimeRemaining(endDate, 'Election ends in:');
             } else {
-                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                document.getElementById('countdown').textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                countdownText = 'Election has ended.';
             }
+
+            document.getElementById('countdown').textContent = countdownText;
         }
 
-        function startVoting() {
-            countdownInterval = setInterval(updateCountdown, 1000);
+        function getTimeRemaining(targetDate, prefix) {
+            const now = new Date();
+            const totalSeconds = Math.floor((targetDate - now) / 1000);
+
+            if (totalSeconds < 0) return '00d 00h 00m 00s';
+
+            const days = Math.floor(totalSeconds / (3600 * 24));
+            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            return `${prefix} ${pad(days)}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
         }
 
-        function initializeCountdown() {
-            document.getElementById('start-time-display').textContent = `Election Start: ${electionStartTime.toLocaleString()}`;
-            document.getElementById('end-time-display').textContent = `Election End: ${electionEndTime.toLocaleString()}`;
-            document.getElementById('countdown-section').classList.remove("hidden");
-            updateCountdown();
-            startVoting();
+        function pad(num) {
+            return num.toString().padStart(2, '0');
         }
 
-        // Event listeners
-        document.getElementById("set-time-btn").addEventListener("click", setElectionTimes);
+        function formatDateTime(dateTimeStr) {
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString();
+        }
+
+        function showNotification(message, type = 'info') {
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
     </script>
-</body>
 
-</html>
+
+    </body>
+    
+    </html>

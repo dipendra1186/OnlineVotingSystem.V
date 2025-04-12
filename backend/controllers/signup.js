@@ -91,6 +91,11 @@ const createCustomer = async (req, res) => {
 
         await sendOTP(email, otp, userID, role, photo);
 
+        // ✅ Store session values here
+        req.session.userID = userID;
+        req.session.userEmail = email;
+        req.session.role = role;
+
         res.status(200).json({
             success: true,
             message: `User registered successfully as ${role}. Check your email for your ${role === "Admin" ? "Admin ID" : "Voter ID"}.`,
@@ -102,6 +107,7 @@ const createCustomer = async (req, res) => {
         res.status(500).json({ success: false, message: 'Registration failed.', error: error.message });
     }
 };
+
 
 // Send OTP + ID via Email
 const sendOTP = async (email, otp, userID, role, photo) => {

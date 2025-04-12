@@ -220,8 +220,6 @@
             <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded">
                 <h2 class="text-xl font-bold">Time Remaining</h2>
                 <p id="countdown" class="text-4xl font-bold text-center">Loading...</p>
-                <p id="start-time-display" class="text-center mt-2 text-gray-600">Election Start: --:--</p>
-                <p id="end-time-display" class="text-center text-gray-600">Election End: --:--</p>
             </div>
 
             <!-- Vote Form -->
@@ -234,26 +232,16 @@
         </div>
     </div>
 
-    <!-- Style -->
-    <style>
-        .candidate-option {
-            transition: all 0.2s ease-in-out;
-        }
-
-        .candidate-option input[type="radio"]:checked+img {
-            outline: 3px solid #2563eb;
-            outline-offset: 4px;
-        }
-
-        .candidate-option input[type="radio"]:checked~div {
-            background-color: #eff6ff;
-        }
-    </style>
-
-    <!-- Script -->
     <script>
-        const voterID = localStorage.getItem("userID"); // Changed from voterID to voterId to match backend
+        const voterID = localStorage.getItem("userID");
+        
 
+        if (!voterID) {
+            alert("Voter ID not found. Please log in again.");
+            window.location.href = "/login"; // redirect if voter ID is missing
+        }
+
+        // Load candidates from API
         async function loadCandidates() {
             try {
                 const res = await fetch("/api/candidates");
@@ -278,77 +266,99 @@
                 });
             } catch (err) {
                 console.error("Failed to load candidates", err);
+                alert("Failed to load candidates, please try again later.");
             }
         }
 
-        function loadCountdownFromLocalStorage() {
-            const start_time = localStorage.getItem("electionStartTime");
-            const end_time = localStorage.getItem("electionEndTime");
+        // Cast vote
+        document.getElementById("vote-btn").addEventListener("click", async () => {
+            const selected = document.querySelector('input[name="candidate"]:checked');
+            if (!selected) return alert("Please select a candidate");
 
-            if (!start_time || !end_time) {
-                document.getElementById("countdown").textContent = "Election time not set.";
-                return;
+            const currentTime = new Date();
+            const startTime = new Date(localStorage.getItem("election_start_time"));
+            const endTime = new Date(localStorage.getItem("election_end_time"));
+
+            if (currentTime < startTime || currentTime > endTime) {
+                return alert("Voting is only allowed during the election period.");
             }
 
-            document.getElementById("start-time-display").textContent = "Election Start: " + new Date(start_time).toLocaleString();
-            document.getElementById("end-time-display").textContent = "Election End: " + new Date(end_time).toLocaleString();
+            try {
+                const res = await fetch("/api/vote/cast-vote", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterID, candidateID: selected.value })
+                });
 
-            function updateCountdown() {
-                const now = new Date();
-                const end = new Date(end_time);
-                const diff = end - now;
+                const data = await res.json();
 
-                if (diff <= 0) {
-                    document.getElementById("countdown").textContent = "Election Ended";
-                    document.getElementById("vote-btn").disabled = true;
+                if (!res.ok) {
+                    alert(data.message || "Something went wrong.");
                     return;
                 }
 
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                document.getElementById("countdown").textContent = `${hours}h ${minutes}m ${seconds}s`;
+                alert(data.message || "Vote submitted successfully!");
+                document.getElementById("vote-btn").disabled = true;
+            } catch (err) {
+                console.error("Vote submission failed", err);
+                alert("Something went wrong while submitting your vote.");
+            }
+        });
+
+        // Countdown Display
+        function loadCountdownFromLocalStorage() {
+            const startTime = new Date(localStorage.getItem("election_start_time"));
+            const endTime = new Date(localStorage.getItem("election_end_time"));
+
+            const countdownEl = document.getElementById("countdown");
+            if (!countdownEl) return;
+
+            function updateCountdown() {
+                const now = new Date();
+                let diff = endTime - now;
+
+                if (now < startTime) {
+                    countdownEl.innerText = "Election hasn't started yet.";
+                    return;
+                }
+
+                if (diff <= 0) {
+                    countdownEl.innerText = "Election has ended.";
+                    return;
+                }
+
+                const hours = Math.floor(diff / 1000 / 60 / 60);
+                const minutes = Math.floor((diff / 1000 / 60) % 60);
+                const seconds = Math.floor((diff / 1000) % 60);
+
+                countdownEl.innerText = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
             }
 
             updateCountdown();
             setInterval(updateCountdown, 1000);
         }
 
-        document.getElementById("vote-btn").addEventListener("click", async () => {
-            const selected = document.querySelector('input[name="candidate"]:checked');
-            if (!selected) return alert("Select a candidate");
-
-            try {
-                const res = await fetch("/api/vote/cast-vote", {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ voterId, candidateID: selected.value }) // Changed from voterID to voterId
-                });
-
-                const data = await res.json();
-                alert(data.message);
-                document.getElementById("vote-btn").disabled = true;
-            } catch (err) {
-                console.error("Vote failed", err);
-                alert("Something went wrong while submitting your vote.");
-            }
-        });
-
+        // Fetch election time from API once and store in localStorage
         async function fetchElectionTimeOnce() {
             try {
                 const res = await fetch("/api/vote/election-time");
                 const { start_time, end_time } = await res.json();
+
                 localStorage.setItem("election_start_time", start_time);
                 localStorage.setItem("election_end_time", end_time);
-                loadCountdownFromLocalStorage(); // Reload countdown after fetching new times
+
+                loadCountdownFromLocalStorage();
             } catch (err) {
                 console.error("Failed to fetch election time", err);
             }
         }
 
+        // Initial load
         loadCandidates();
-        fetchElectionTimeOnce(); // Uncommented to ensure election time is fetched
+        fetchElectionTimeOnce();
     </script>
+
+
 
 </body>
 

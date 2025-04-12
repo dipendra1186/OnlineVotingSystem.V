@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const voteController = require("../controllers/VoteController"); // or VoteController if separated
+const voteController = require("../controllers/VoteController");
 
 router.get("/candidates", voteController.getCandidates);
 router.get("/election-time", voteController.getElectionTime);

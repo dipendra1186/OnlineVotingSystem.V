@@ -1,14 +1,22 @@
+// routes/countdown_R.js
 const express = require("express");
 const router = express.Router();
 const countdownController = require("../controllers/countdown");
 
-// Route to set election time
+/**
+ * Countdown Routes
+ * Handles election time management functionality
+ */
+
+// Admin routes for election time management
+
+// Test route to check if router is working
+router.get("/test", (req, res) => {
+  res.status(200).json({ message: "Countdown router is working" });
+});
+
 router.post("/set", countdownController.setElectionTime);
-
-// Route to get election time
-router.get("/get/:adminId", countdownController.getElectionTime);
-
-// Route to cancel election time
-router.post("/cancel", countdownController.cancelElectionTime);
+router.get("/get/:adminID", countdownController.getElectionTime);
+router.delete("/delete/:adminID", countdownController.deleteElectionTime);
 
 module.exports = router;
