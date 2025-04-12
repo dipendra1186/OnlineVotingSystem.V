@@ -71,6 +71,7 @@ const getElectionTime = async (req, res) => {
     }
 };
 
+
 // Delete election time
 const deleteElectionTime = async (req, res) => {
     try {
@@ -91,6 +92,50 @@ const deleteElectionTime = async (req, res) => {
         return res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+const updateElectionStatus = async () => {
+    try {
+        const [electionRows] = await pool.query('SELECT * FROM election_times ORDER BY id DESC LIMIT 1');
+
+        if (electionRows.length === 0) {
+            console.error('❌ No election time found in database.');
+            return;
+        }
+
+        const { id, end_time, start_time, status } = electionRows[0];
+        const currentTime = new Date();
+        const electionEndTime = new Date(end_time);
+        const electionStartTime = new Date(start_time);
+
+        console.log(`🕐 Start: ${electionStartTime.toISOString()}`);
+        console.log(`🕐 End: ${electionEndTime.toISOString()}`);
+        console.log(`⏰ Now: ${currentTime.toISOString()}`);
+
+        let newStatus = status;
+
+        if (currentTime < electionStartTime) {
+            newStatus = 'upcoming';
+        } else if (currentTime >= electionStartTime && currentTime < electionEndTime) {
+            newStatus = 'ongoing';
+        } else if (currentTime >= electionEndTime) {
+            newStatus = 'ended';
+        }
+
+        // Only update if status actually changed
+        if (newStatus !== status) {
+            await pool.query('UPDATE election_times SET status = ?, updated_at = NOW() WHERE id = ?', [newStatus, id]);
+            console.log(`✅ Election status updated to "${newStatus}"`);
+        } else {
+            console.log(`ℹ️ Status remains "${status}"`);
+        }
+    } catch (err) {
+        console.error("🚨 Error updating election status:", err);
+    }
+};
+
+setInterval(updateElectionStatus, 1000); // every second
+
+
 
 module.exports = {
     setElectionTime,

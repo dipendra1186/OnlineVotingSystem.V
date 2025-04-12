@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results - Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar li {
+            margin: 1rem 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2.5rem;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .celebration-banner {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22c55e;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-radius: 12px;
+            z-index: 1000;
+        }
+
+        .winning-announcement {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #facc15;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Result Management</h2>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/Candidate">Manage Candidates</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/countdown">Countdown</a></li>
+            <li><a href="/results" class="active">Results</a></li>
+            <li><a href="/verifyVoters">Verify Voters</a></li>
+            <li><a href="/profile">Profile</a></li>
+        </ul>
+        <button class="logout-btn">Logout</button>
+    </div>
+
+    <div class="main-content">
+        <h1 class="text-2xl font-bold">Election Results</h1>
+
+        <div class="bg-white p-6 mt-6 shadow rounded">
+            <h2 class="text-xl font-bold">Live Vote Count</h2>
+            <canvas id="voteChart"></canvas>
+        </div>
+
+        <div class="bg-white p-6 mt-6 shadow rounded">
+            <h3 class="text-lg font-semibold">Summary</h3>
+            <div id="resultsSummary" class="mt-4"></div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="/dashboard" class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700">Back to
+                Dashboard</a>
+        </div>
+    </div>
+
+    <div id="celebration-banner" class="celebration-banner">
+        🎉 The Election has Ended! 🎉
+    </div>
+
+    <div id="status">⌛ Waiting for results...</div>
+    <div id="results"></div>
+    
+    <script>
+        let voteChart;
+
+        async function fetchResults() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+
+                console.log("API response:", data);
+
+                if (response.status === 403) {
+                    document.getElementById('status').innerText = '🕒 Election is still ongoing...';
+                    return;
+                }
+
+                if (response.ok && data.electionStatus === 'ended') {
+                    document.getElementById('status').style.display = 'none';
+
+                    const resultsContainer = document.getElementById('results');
+                    const summaryContainer = document.getElementById('resultsSummary');
+                    const banner = document.getElementById('celebration-banner');
+
+                    resultsContainer.innerHTML = '';
+                    summaryContainer.innerHTML = '';
+
+                    let winner = data.candidates[0];
+
+                    data.candidates.forEach((candidate, index) => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `<strong>${index + 1}. ${candidate.name}</strong> - ${candidate.vote_count} votes`;
+                        resultsContainer.appendChild(div);
+
+                        if (candidate.vote_count > winner.vote_count) {
+                            winner = candidate;
+                        }
+                    });
+
+                    // Update Chart
+                    const names = data.candidates.map(c => c.name);
+                    const votes = data.candidates.map(c => c.vote_count);
+                    updateChart(names, votes);
+
+                    // Show summary and winner
+                    summaryContainer.innerHTML = `
+                        <div class="winning-announcement">
+                            🏆 Winner: ${winner.name} with ${winner.vote_count} votes!
+                        </div>
+                    `;
+
+                    // Show celebration banner
+                    banner.style.display = 'block';
+
+                    clearInterval(pollingInterval); // Stop polling once election ends
+                } else {
+                    console.log("Election still ongoing or status not 'ended'");
+                }
+            } catch (error) {
+                console.error("❌ Error fetching results:", error);
+                document.getElementById('status').innerText = 'Error fetching results.';
+            }
+        }
+
+        function updateChart(labels, data) {
+            const ctx = document.getElementById('voteChart').getContext('2d');
+            if (voteChart) {
+                voteChart.data.labels = labels;
+                voteChart.data.datasets[0].data = data;
+                voteChart.update();
+            } else {
+                voteChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Vote Count',
+                            data: data,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        const pollingInterval = setInterval(fetchResults, 2000); // Poll every 2 seconds
+    </script>
+
+
+
+
+</body>
+
+</html>

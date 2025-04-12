@@ -23,47 +23,69 @@ exports.getCandidates = async (req, res) => {
     }
 };
 
-// Fetch total votes per candidate
+// http://localhost:3000/api/dashboard/getVotes
 exports.getVotes = async (req, res) => {
-    db.query('SELECT candidate_id, COUNT(*) AS votes FROM votes GROUP BY candidate_id', (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(result);
-    });
+    try {
+        const [rows] = await db.execute(`
+            SELECT id AS candidate_id, name, vote_count AS total_votes
+            FROM candidates
+            ORDER BY total_votes DESC
+        `);
+        res.json(rows || []);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
-// Fetch election end time
+
+
+// http://localhost:3000/api/dashboard/electionEndTime 
+
 exports.getElectionEndTime = async (req, res) => {
-    db.query('SELECT end_time FROM election_settings LIMIT 1', (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(result[0]);
-    });
+    const query = `
+        SELECT end_time, start_time 
+        FROM election_times 
+        WHERE status = 'ongoing' 
+        ORDER BY created_at DESC 
+        LIMIT 1
+    `;
+    
+    try {
+        const [result] = await db.query(query);  // Using await for promise-based query
+        
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'No ongoing election found.' });
+        }
+
+        res.json(result[0]); // Send back the start_time and end_time
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: err.message });
+    }
 };
 
-// Fetch voter details
-exports.getVoterDetails = async (req, res) => {
-    const { voterID } = req.params;
-    db.query('SELECT fullName, age, gender, email, voterID FROM voters WHERE voterID = ?', [voterID], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(result[0] || {});
-    });
-};
+
+
 
 // Cast a vote
-exports.castVote = (req, res) => {
+exports.castVote = async (req, res) => {
     const { voterID, candidate_id } = req.body;
     
-    // Check if voter has already voted
-    db.query('SELECT * FROM votes WHERE voter_id = ?', [voterID], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        // Check if the voter has already voted
+        const [existingVote] = await db.query('SELECT * FROM votes WHERE voter_id = ?', [voterID]);
 
-        if (results.length > 0) {
+        if (existingVote.length > 0) {
             return res.status(400).json({ error: 'You have already voted!' });
         }
 
-        // Insert vote
-        db.query('INSERT INTO votes (voter_id, candidate_id) VALUES (?, ?)', [voterID, candidate_id], (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: 'Vote cast successfully' });
-        });
-    });
+        // Insert the vote
+        await db.query('INSERT INTO votes (voter_id, candidate_id) VALUES (?, ?)', [voterID, candidate_id]);
+        
+        res.json({ message: 'Vote cast successfully' });
+    } catch (err) {
+        console.error("Error casting vote:", err);
+        res.status(500).json({ error: 'Server error' });
+    }
 };
+

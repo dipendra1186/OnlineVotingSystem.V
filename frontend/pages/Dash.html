@@ -11,7 +11,7 @@
         * {
             box-sizing: border-box;
         }
-    
+
         body {
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
@@ -20,7 +20,7 @@
             height: 100vh;
             overflow: hidden;
         }
-    
+
         .sidebar {
             position: fixed;
             width: 250px;
@@ -31,23 +31,23 @@
             display: flex;
             flex-direction: column;
         }
-    
+
         .sidebar h2 {
             font-size: 1.8rem;
             margin-bottom: 2rem;
             font-weight: 600;
         }
-    
+
         .sidebar ul {
             list-style: none;
             padding: 0;
             flex: 1;
         }
-    
+
         .sidebar li {
             margin: 1rem 0;
         }
-    
+
         .sidebar a {
             text-decoration: none;
             color: white;
@@ -57,12 +57,12 @@
             border-radius: 8px;
             transition: background-color 0.3s ease;
         }
-    
+
         .sidebar a:hover,
         .sidebar a.active {
             background-color: #3b82f6;
         }
-    
+
         .logout-btn {
             margin-top: 2rem;
             background-color: #ef4444;
@@ -74,11 +74,11 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-    
+
         .logout-btn:hover {
             background-color: #dc2626;
         }
-    
+
         .main-content {
             margin-left: 250px;
             padding: 2.5rem;
@@ -89,19 +89,19 @@
             height: 100vh;
             box-sizing: border-box;
         }
-    
+
         .main-content h1 {
             font-size: 2rem;
             font-weight: bold;
             margin-bottom: 2rem;
         }
-    
+
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
         }
-    
+
         .bg-white {
             background-color: white;
             padding: 1.5rem;
@@ -109,86 +109,84 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-    
+
         .bg-white:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
-    
+
         .bg-white h3 {
             font-size: 1.2rem;
             margin-bottom: 1rem;
             font-weight: 600;
         }
-    
+
         .bg-white p {
             font-size: 1.5rem;
             font-weight: bold;
         }
-    
+
         .bg-white .text-2xl {
             font-size: 1.5rem;
         }
-    
+
         .bg-white .text-lg {
             font-size: 1.2rem;
         }
-    
+
         .shadow {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         }
-    
+
         .mt-6 {
             margin-top: 1.5rem;
         }
-    
+
         .countdown {
             font-size: 2rem;
             font-weight: bold;
         }
-    
-        /* Chart Section */
+
         canvas {
             width: 100%;
             height: 300px;
             margin-top: 2rem;
         }
-    
-        /* Mobile Responsive Styles */
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
                 padding: 1.5rem;
                 display: none;
             }
-    
+
             .main-content {
                 margin-left: 0;
                 width: 100%;
                 padding: 1.5rem;
                 box-sizing: border-box;
             }
-    
+
             .grid {
                 grid-template-columns: 1fr;
             }
-    
+
             .sidebar a {
                 font-size: 1rem;
             }
-    
+
             .bg-white {
                 padding: 1rem;
             }
-    
+
             .bg-white h3 {
                 font-size: 1rem;
             }
-    
+
             .bg-white p {
                 font-size: 1.2rem;
             }
-    
+
             .logout-btn {
                 padding: 0.7rem;
                 font-size: 1rem;
@@ -196,63 +194,61 @@
         }
     </style>
 
-    </head>
-    
-    <body>
-        <div class="sidebar">
-            <h2>Welcome to Dashboard</h2>
-            <ul>
-                <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/Candidate">Manage Candidates</a></li>
-                <li><a href="/vote">Manage Vote</a></li>
-                <li><a href="/countdown">Countdown</a></li>
-                <li><a href="/results">Results</a></li>
-                <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
-            </ul>
-            <button class="logout-btn">Logout</button>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Welcome to Dashboard</h2>
+        <ul>
+            <li><a href="/dashboard" class="active">Dashboard</a></li>
+            <li><a href="/Candidate">Manage Candidates</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/countdown">Countdown</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/verifyVoters">Verify Voters</a></li>
+            <li><a href="/profile">Profile</a></li>
+        </ul>
+        <button class="logout-btn">Logout</button>
+    </div>
+
+    <div class="main-content flex-1 p-6">
+        <h1 class="text-2xl font-bold">Dashboard Overview</h1>
+        <div class="grid grid-cols-3 gap-6 mt-4">
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg">Total Voters</h3>
+                <p class="text-2xl font-bold" id="totalVoters">0</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg">Total Candidates</h3>
+                <p class="text-2xl font-bold" id="totalCandidates">0</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg">Votes Cast</h3>
+                <p class="text-2xl font-bold" id="votesCast">0</p>
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content flex-1 p-6">
-            <h1 class="text-2xl font-bold">Dashboard Overview</h1>
-            <div class="grid grid-cols-3 gap-6 mt-4">
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg">Total Voters</h3>
-                    <p class="text-2xl font-bold" id="totalVoters">0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg">Total Candidates</h3>
-                    <p class="text-2xl font-bold" id="totalCandidates">0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg">Votes Cast</h3>
-                    <p class="text-2xl font-bold" id="votesCast">0</p>
-                </div>
-            </div>
+        <div class="bg-white p-6 mt-6 shadow rounded">
+            <h2 class="text-xl font-bold">Election Countdown</h2>
+            <p id="countdown" class="text-2xl font-bold">Loading...</p>
+        </div>
 
-            <!-- Election Time Countdown -->
-            <div class="bg-white p-6 mt-6 shadow rounded">
-                <h2 class="text-xl font-bold">Election Countdown</h2>
-                <p id="countdown" class="text-2xl font-bold">Loading...</p>
-            </div>
-
-            <!-- Chart Section -->
-            <div class="bg-white p-6 mt-6 shadow rounded">
-                <h2 class="text-xl font-bold">Live Vote Count</h2>
-                <canvas id="voteChart"></canvas>
-            </div>
+        <div class="bg-white p-6 mt-6 shadow rounded">
+            <h2 class="text-xl font-bold">Live Vote Count</h2>
+            <canvas id="voteChart"></canvas>
         </div>
     </div>
 
     <script>
-        // Function to fetch total voters from the backend API
+        let electionEndTime = null;
+        let countdownInterval = null;
+
         async function fetchTotalVoters() {
             try {
                 const response = await fetch('http://localhost:3000/api/dashboard/totalVoters');
                 if (response.ok) {
                     const data = await response.json();
-                    console.log("API Response:", data);
-                    const totalVoters = data.totalVoters || 0; // Ensure totalVoters exists
+                    const totalVoters = data.totalVoters || 0;
                     document.getElementById('totalVoters').innerText = totalVoters;
                 } else {
                     console.error('Failed to fetch total voters');
@@ -262,105 +258,115 @@
             }
         }
 
-        // Call the function when the page is loaded
-        document.addEventListener('DOMContentLoaded', fetchTotalVoters);
-
         // Fetch the candidate data and display the total number of candidates
-        document.addEventListener('DOMContentLoaded', () => {
-            const candidateCountElement = document.getElementById('totalCandidates');  // Changed this to 'totalCandidates'
+            document.addEventListener('DOMContentLoaded', () => {
+                const candidateCountElement = document.getElementById('totalCandidates');
 
-            // Fetch candidates from the API
-            fetch('http://localhost:3000/api/candidates')  // Make sure the URL is correct
-                .then(response => response.json())
-                .then(data => {
-                    // Display the number of candidates
-                    const totalCandidates = data.length; // Length of the array represents total candidates
-                    candidateCountElement.textContent = totalCandidates;
-                })
-                .catch(err => {
-                    console.error('Error fetching candidates:', err);
-                    candidateCountElement.textContent = 'Error fetching data';
-                });
-        });
+                // Fetch candidates from the API
+                fetch('http://localhost:3000/api/candidates')  // Make sure the URL is correct
+                    .then(response => response.json())
+                    .then(data => {
+                        // Display the number of candidates
+                        const totalCandidates = data.length; // Length of the array represents total candidates
+                        candidateCountElement.textContent = totalCandidates;
+                    })
+                    .catch(err => {
+                        console.error('Error fetching candidates:', err);
+                        candidateCountElement.textContent = 'Error fetching data';
+                    });
+            });
+            
 
-        // Fetch dynamic data from localStorage
-        const votes = JSON.parse(localStorage.getItem('votes')) || {};
-        const electionEndTime = new Date(localStorage.getItem('electionEndTime')) || new Date();
+        async function fetchElectionEndTime() {
+            try {
+                const response = await fetch('http://localhost:3000/api/dashboard/electionEndTime');
+                const data = await response.json();
 
-        // Election Countdown Timer
+                if (data && data.end_time) {
+                    electionEndTime = new Date(data.end_time);
+                    updateCountdown();
+                    countdownInterval = setInterval(updateCountdown, 1000);
+                }
+            } catch (error) {
+                console.error('Error fetching election end time:', error);
+            }
+        }
+
         function updateCountdown() {
             const now = new Date();
             const timeLeft = electionEndTime - now;
 
             if (timeLeft <= 0) {
-                document.getElementById('countdown').textContent = "Election Ended";
+                document.getElementById('countdown').textContent = 'Election Ended';
                 clearInterval(countdownInterval);
+            } else {
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
-                // Show winner celebration
-                showWinnerCelebration();
-                return;
+                document.getElementById('countdown').textContent = `${hours}h ${minutes}m ${seconds}s`;
             }
-
-            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-            document.getElementById('countdown').textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
 
-        const countdownInterval = setInterval(updateCountdown, 1000);
-
-        // Prepare chart data
-        const candidates = JSON.parse(localStorage.getItem('candidates')) || [];
-        const ctx = document.getElementById('voteChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: candidates.map(c => c.name),
-                datasets: [{
-                    label: 'Votes',
-                    data: candidates.map(c => votes[c.name] || 0),
-                    backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF5733', '#8E44AD']
-                }]
+        async function fetchVotesCast() {
+            try {
+                const response = await fetch('http://localhost:3000/api/dashboard/getVotes');
+                if (response.ok) {
+                    const data = await response.json();
+                    const totalVotes = data.reduce((acc, candidate) => acc + candidate.total_votes, 0);
+                    document.getElementById('votesCast').innerText = totalVotes;
+                } else {
+                    console.error('Failed to fetch vote data');
+                }
+            } catch (error) {
+                console.error('Error fetching vote data:', error);
             }
-        });
-
-        // Update votes and show celebration after a vote
-        function updateVotes(candidateName) {
-            votes[candidateName] = votes[candidateName] ? votes[candidateName] + 1 : 1;
-
-            // Save votes and update the votes cast count
-            localStorage.setItem('votes', JSON.stringify(votes));
-
-            // Update the chart dynamically
-            chart.data.datasets[0].data = candidates.map(c => votes[c.name] || 0);
-            chart.update();
         }
 
-        // Show winner celebration
-        function showWinnerCelebration() {
-            const winner = candidates.reduce((prev, current) => (votes[current.name] || 0) > (votes[prev.name] || 0) ? current : prev);
-            document.getElementById('winnerName').textContent = `Winner: ${winner.name}`;
-            document.getElementById('celebrationModal').classList.remove('hidden');
+        async function fetchVoteData() {
+            try {
+                const response = await fetch('http://localhost:3000/api/dashboard/getVotes');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateVoteChart(data);
+                } else {
+                    console.error('Failed to fetch vote data');
+                }
+            } catch (error) {
+                console.error('Error fetching vote data:', error);
+            }
         }
 
-        // Close the celebration modal
-        document.getElementById('closeModalBtn').addEventListener('click', function () {
-            document.getElementById('celebrationModal').classList.add('hidden');
-        });
+        function updateVoteChart(data) {
+            const ctx = document.getElementById('voteChart').getContext('2d');
+            const voteChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(candidate => candidate.name),
+                    datasets: [{
+                        label: 'Votes',
+                        data: data.map(candidate => candidate.total_votes),
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
 
-        // Example of vote button click handling
-        document.getElementById('vote-btn').addEventListener('click', function () {
-            const selectedCandidate = document.querySelector('input[name="candidate"]:checked');
-            if (selectedCandidate) {
-                const candidateName = candidates[selectedCandidate.value].name;
-                updateVotes(candidateName);
-                alert(`You voted for ${candidateName}`);
-            }
-        });
+        // Initialize the dashboard
+        fetchTotalVoters();
+        fetchElectionEndTime();
+        fetchVotesCast();
+        fetchVoteData();
     </script>
-
 </body>
 
 </html>
