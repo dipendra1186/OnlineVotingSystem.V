@@ -42,9 +42,9 @@ async function generateUniqueID(role, fullName, connection) {
 // Main signup function
 const createCustomer = async (req, res) => {
     try {
-        const { fullName, age, religion, gender, email, password, role, photo } = req.body;
+        const { fullName, age, gender, email, password, role, photo } = req.body;
 
-        if (!fullName || !age || !religion || !gender || !email || !password || !role || !photo) {
+        if (!fullName || !age || !gender || !email || !password || !role || !photo) {
             return res.status(400).json({ message: 'All fields including photo are required' });
         }
 
@@ -80,11 +80,11 @@ const createCustomer = async (req, res) => {
 
         // Insert user with photo into database
         const insertQuery = role === "Admin"
-            ? `INSERT INTO admins (fullName, age, religion, gender, email, password, adminID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            : `INSERT INTO voters (fullName, age, religion, gender, email, password, voterID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         await connection.execute(insertQuery, [
-            fullName, ageNum, religion, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo
+            fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo
         ]);
 
         console.log(`✅ Inserted user with ID: ${userID}`);

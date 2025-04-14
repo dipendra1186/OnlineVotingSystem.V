@@ -27,16 +27,6 @@
                 <input type="number" id="age" placeholder="Enter your age" required>
             </div>
             <div class="form-group">
-                <label for="religion">Religion</label>
-                <select id="religion" required>
-                    <option value="Hindu">Hindu</option>
-                    <option value="Muslim">Muslim</option>
-                    <option value="Christian">Christian</option>
-                    <option value="Buddhist">Buddhist</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
                 <label for="gender">Gender</label>
                 <select id="gender" required>
                     <option value="male">Male</option>
@@ -112,12 +102,11 @@
                 role: role,
                 fullName: fullName,
                 age: age,
-                religion: document.getElementById('religion').value,
                 gender: document.getElementById('gender').value,
                 email: email,
                 password: password,
                 photo: photoUrl
-            };
+            };resizeBy
 
             try {
                 const response = await fetch('http://localhost:3000/api/signup', {
@@ -131,6 +120,7 @@
                 if (data.success) {
                     localStorage.setItem('userID', data.userID);
                     localStorage.setItem('userEmail', userData.email);
+                    localStorage.setItem('role', role);
                     alert("OTP Sent to your email address");
                     window.location.href = './otp';
                 } else {

@@ -42,8 +42,8 @@ async function generateUniqueID(role, fullName, connection) {
 
 const createCustomer = async (req, res) => {
     try {
-        const { fullName, age, religion, gender, email, password, role } = req.body;
-        if (!fullName || !age || !religion || !gender || !email || !password || !role) {
+        const { fullName, age, gender, email, password, role } = req.body;
+        if (!fullName || !age || !gender || !email || !password || !role) {
             return res.status(400).json({ message: 'All fields are required' });
         }
         const ageNum = parseInt(age);
@@ -76,10 +76,10 @@ const createCustomer = async (req, res) => {
         const otpExpiry = new Date();
         otpExpiry.setMinutes(otpExpiry.getMinutes() + 10);
         const insertQuery = role === "Admin" 
-            ? `INSERT INTO admins (fullName, age, religion, gender, email, password, adminID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            : `INSERT INTO voters (fullName, age, religion, gender, email, password, voterID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const [result] = await connection.execute(insertQuery, [
-            fullName, ageNum, religion, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry
+            fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry
         ]);
         console.log(`Inserted user with ID: ${userID}`);
         await sendOTP(email, otp, userID, role);

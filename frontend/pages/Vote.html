@@ -225,11 +225,15 @@
 
             <!-- Vote Form -->
             <div id="vote-section" class="bg-white p-6 mt-6 shadow rounded">
-                <h2 class="text-xl font-bold mb-4">Vote for Your Candidate</h2>
-                <div id="candidateList" class="space-y-4"></div>
-                <button id="vote-btn" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg"
-                    disabled>Vote</button>
+                <h2 class="text-2xl font-bold mb-6 text-center text-blue-700">Vote for Your Candidate</h2>
+                <div id="candidateList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- Candidates will be populated here -->
+                </div>
+                <button id="vote-btn"
+                    class="mt-8 w-full bg-blue-700 hover:bg-blue-800 text-white text-lg font-semibold py-3 rounded-lg transition duration-300"
+                    disabled>Submit Vote</button>
             </div>
+
         </div>
     </div>
 
@@ -250,15 +254,24 @@
                 const list = document.getElementById("candidateList");
 
                 list.innerHTML = candidates.map(c => `
-                    <label class="flex items-center gap-4 border rounded-lg p-4 cursor-pointer candidate-option hover:bg-blue-50">
-                        <input type="radio" name="candidate" value="${c.id}" class="hidden" />
-                        <img src="${c.photo}" alt="${c.name}" class="w-16 h-16 object-cover rounded-full border" />
-                        <div class="flex-1">
-                            <h4 class="text-lg font-bold">${c.name} (${c.party})</h4>
-                            <p class="text-sm text-gray-600">${c.promises}</p>
-                        </div>
-                    </label>
-                `).join('');
+    <label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
+        <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
+        <div class="flex flex-col items-center text-center gap-4">
+            <img src="${c.photo}" alt="${c.name}" class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
+            <div>
+                <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
+                <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
+                <p class="text-sm text-gray-600 italic">"${c.promises}"</p>
+            </div>
+        </div>
+        <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+    </label>
+`).join('');
+
 
                 document.querySelectorAll('input[name="candidate"]').forEach(input => {
                     input.addEventListener('change', () => {

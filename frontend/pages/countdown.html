@@ -313,13 +313,26 @@
         function getAdminID() {
             return localStorage.getItem('userID');
         }
+        function getrole() {
+                return localStorage.getItem('role');
+            }
 
         let startDate, endDate;
 
         document.addEventListener('DOMContentLoaded', function () {
-            getElectionTime();
-            setInterval(updateCountdown, 1000);
-        });
+                const role = localStorage.getItem('role');
+
+                if (!role || role.toLowerCase() !== 'admin') {
+                    alert("Access Denied! Only admins are allowed to view this page.");
+                    window.location.href = '/Dashboard';
+                    return;
+                }
+
+                // If admin, proceed with election countdown
+                getElectionTime();
+                setInterval(updateCountdown, 1000);
+            });
+
 
         document.getElementById('set-time-btn').addEventListener('click', function () {
             const startTime = document.getElementById('start-time').value;
@@ -347,8 +360,6 @@
                 .then(data => {
                     showNotification(data.message, 'success');
                     if (data.message === "Election time set successfully") {
-                        startDate = new Date(startTime);
-                        endDate = new Date(endTime);
                         displayCountdownUI(startTime, endTime);
                     }
                 })
@@ -367,7 +378,9 @@
                 .then(data => {
                     showNotification(data.message, 'success');
                     document.getElementById('countdown-section').classList.add('hidden');
-                    document.getElementById('time-status').textContent = 'Election time has been canceled.';
+                    document.getElementById('time-status').textContent = "Election time has been canceled.";
+                    document.getElementById('start-time').value = '';
+                    document.getElementById('end-time').value = '';
                 })
                 .catch(err => {
                     console.error(err);
@@ -377,17 +390,16 @@
 
         document.getElementById('modify-time-btn').addEventListener('click', function () {
             document.getElementById('countdown-section').classList.add('hidden');
-            document.getElementById('time-status').textContent = 'Modify the election time below.';
+            document.getElementById('time-setting').classList.remove('hidden');
+            document.getElementById('time-status').textContent = 'Please modify and set new election time.';
         });
 
         function getElectionTime() {
             const adminID = getAdminID();
             fetch(`/api/countdown/get/${adminID}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     if (data.startTime && data.endTime) {
-                        startDate = new Date(data.startTime);
-                        endDate = new Date(data.endTime);
                         displayCountdownUI(data.startTime, data.endTime);
                     }
                 })
@@ -398,57 +410,67 @@
         }
 
         function displayCountdownUI(startTime, endTime) {
+            startDate = new Date(startTime);
+            endDate = new Date(endTime);
+
+            document.getElementById('start-time-display').textContent = `Election Start: ${startDate.toLocaleString()}`;
+            document.getElementById('end-time-display').textContent = `Election End: ${endDate.toLocaleString()}`;
+            document.getElementById('time-setting').classList.add('hidden');
             document.getElementById('countdown-section').classList.remove('hidden');
-            document.getElementById('start-time-display').textContent = `Election Start: ${formatDateTime(startTime)}`;
-            document.getElementById('end-time-display').textContent = `Election End: ${formatDateTime(endTime)}`;
         }
 
         function updateCountdown() {
             if (!startDate || !endDate) return;
 
             const now = new Date();
-            let countdownText = '';
+            let distance = startDate - now;
 
-            if (now < startDate) {
-                countdownText = getTimeRemaining(startDate, 'Election starts in:');
-            } else if (now >= startDate && now <= endDate) {
-                countdownText = getTimeRemaining(endDate, 'Election ends in:');
+            if (now >= startDate && now <= endDate) {
+                distance = endDate - now;
+                document.getElementById('countdown').textContent = `Ends in: ${formatTime(distance)}`;
+            } else if (now > endDate) {
+                document.getElementById('countdown').textContent = "Election Ended";
             } else {
-                countdownText = 'Election has ended.';
+                document.getElementById('countdown').textContent = `Starts in: ${formatTime(distance)}`;
             }
-
-            document.getElementById('countdown').textContent = countdownText;
         }
 
-        function getTimeRemaining(targetDate, prefix) {
-            const now = new Date();
-            const totalSeconds = Math.floor((targetDate - now) / 1000);
+        function formatTime(distance) {
+            if (distance < 0) return "0d 0h 0m 0s";
 
-            if (totalSeconds < 0) return '00d 00h 00m 00s';
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            const days = Math.floor(totalSeconds / (3600 * 24));
-            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            return `${prefix} ${pad(days)}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
-        }
-
-        function pad(num) {
-            return num.toString().padStart(2, '0');
-        }
-
-        function formatDateTime(dateTimeStr) {
-            const date = new Date(dateTimeStr);
-            return date.toLocaleString();
+            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
 
         function showNotification(message, type = 'info') {
-            alert(`${type.toUpperCase()}: ${message}`);
+            const div = document.createElement('div');
+            div.textContent = message;
+            div.style.position = 'fixed';
+            div.style.bottom = '20px';
+            div.style.right = '20px';
+            div.style.padding = '1rem 1.5rem';
+            div.style.borderRadius = '10px';
+            div.style.fontWeight = 'bold';
+            div.style.zIndex = 1000;
+            div.style.color = 'white';
+
+            if (type === 'success') {
+                div.style.backgroundColor = '#16a34a';
+            } else {
+                div.style.backgroundColor = '#dc2626';
+            }
+
+            document.body.appendChild(div);
+
+            setTimeout(() => {
+                div.remove();
+            }, 3000);
         }
     </script>
-
-
     </body>
     
     </html>

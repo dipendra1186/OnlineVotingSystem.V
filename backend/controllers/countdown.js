@@ -124,7 +124,8 @@ const updateElectionStatus = async () => {
         // Only update if status actually changed
         if (newStatus !== status) {
             await pool.query('UPDATE election_times SET status = ?, updated_at = NOW() WHERE id = ?', [newStatus, id]);
-            console.log(`✅ Election status updated to "${newStatus}"`);
+            console.log(`✅ Election status updated to: ${newStatus}`);
+
         } else {
             console.log(`ℹ️ Status remains "${status}"`);
         }

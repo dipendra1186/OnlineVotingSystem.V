@@ -187,6 +187,24 @@
     </div>
 
     <script>
+
+        function getrole() {
+                return localStorage.getItem('role');
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const role = localStorage.getItem('role');
+
+                if (!role || role.toLowerCase() !== 'admin') {
+                    alert("Access Denied! Only admins are allowed to view this page.");
+                    window.location.href = '/Dashboard';
+                    return;
+                }
+
+                // If admin, proceed with election countdown
+                getElectionTime();
+                setInterval(updateCountdown, 1000);
+            });
         async function fetchPendingVoters() {
             const res = await fetch('http://localhost:3000/api/verify-voters/pending');
             const voters = await res.json();

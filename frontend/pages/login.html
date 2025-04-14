@@ -179,6 +179,7 @@
                     // Then store with the correct path
                     localStorage.setItem('userID', data.user.userID); // or the correct path
                     localStorage.setItem("user", JSON.stringify(data.user));
+                    localStorage.setItem('role', role);
                     window.location.href = "/Dashboard";
 
                     
