@@ -120,7 +120,7 @@
                 if (data.success) {
                     localStorage.setItem('userID', data.userID);
                     localStorage.setItem('userEmail', userData.email);
-                    localStorage.setItem('role', role);
+                    localStorage.setItem('role', data.role);
                     alert("OTP Sent to your email address");
                     window.location.href = './otp';
                 } else {

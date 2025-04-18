@@ -73,7 +73,7 @@ const verifyOTP = async (req, res) => {
         }
 
         // ✅ Mark user as verified
-        const updateQuery = `UPDATE ${table} SET isVerified = 1 WHERE ${idColumn} = ?`;
+        const updateQuery = `UPDATE ${table} SET isVerified = 0 WHERE ${idColumn} = ?`;
         await db.query(updateQuery, [userID]);
 
         console.log("✅ OTP verified successfully for", table, "UserID:", userID);

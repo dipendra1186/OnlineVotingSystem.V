@@ -35,7 +35,7 @@ const loginCustomer = async (req, res) => {
 
         // Fetch user details from database
         const [rows] = await db.execute(
-            `SELECT ${idColumn} AS userID, password, fullName, email, otp, otpExpiry FROM ${table} WHERE ${idColumn} = ?`,
+            `SELECT ${idColumn} AS userID, password, fullName, email FROM ${table} WHERE ${idColumn} = ?`,
             [voterID]
         );
 

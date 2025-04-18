@@ -202,7 +202,9 @@
         }
 
         /* Add additional styles for smoother user experience */
-        input[type="datetime-local"] {
+        input[type="datetime-local"],
+        input[type="text"],
+        textarea {
             font-size: 1rem;
             padding: 0.5rem;
             border-radius: 8px;
@@ -211,8 +213,16 @@
             transition: border-color 0.3s;
         }
 
-        input[type="datetime-local"]:focus {
+        input[type="datetime-local"]:focus,
+        input[type="text"]:focus,
+        textarea:focus {
             border-color: #3b82f6;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
         }
 
         button {
@@ -250,6 +260,27 @@
         .main-content {
             margin-left: 300px;
         }
+
+        /* Add styles for election name and description display */
+        .election-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .election-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #1e3a8a;
+        }
+
+        .election-description {
+            margin-top: 0.5rem;
+            color: #4b5563;
+            white-space: pre-line;
+        }
     </style>
 
 
@@ -275,7 +306,17 @@
         <h1 class="text-3xl font-bold text-blue-900">Election Countdown</h1>
 
         <div id="time-setting" class="bg-white p-6 mt-6 shadow rounded">
-            <h2 class="text-xl font-bold">Set Election Start and End Time</h2>
+            <h2 class="text-xl font-bold">Set Election Details</h2>
+            <div class="mt-4">
+                <label for="election-name" class="block text-gray-600">Election Name</label>
+                <input type="text" id="election-name" class="mt-2 p-2 border rounded w-full"
+                    placeholder="E.g., Student Council Election 2025" />
+            </div>
+            <div class="mt-4">
+                <label for="election-description" class="block text-gray-600">Election Description</label>
+                <textarea id="election-description" class="mt-2 p-2 border rounded w-full"
+                    placeholder="Provide details about the election..."></textarea>
+            </div>
             <div class="mt-4">
                 <label for="start-time" class="block text-gray-600">Election Start Date and Time</label>
                 <input type="datetime-local" id="start-time" class="mt-2 p-2 border rounded w-full" />
@@ -285,24 +326,28 @@
                 <input type="datetime-local" id="end-time" class="mt-2 p-2 border rounded w-full" />
             </div>
             <button id="set-time-btn" class="mt-4 bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700 w-full">Set
-                Election
-                Time</button>
+                Election Details</button>
 
-            <p id="time-status" class="mt-4 text-gray-600">Please set the election start and end time.</p>
+            <p id="time-status" class="mt-4 text-gray-600">Please set the election details, start and end time.</p>
         </div>
 
         <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded hidden">
             <h2 class="text-xl font-bold">Time Remaining</h2>
-            <p id="countdown" class="text-4xl font-bold text-center">Loading...</p>
+            <div class="election-details">
+                <div id="election-name-display" class="election-name">Election name will appear here</div>
+                <div id="election-description-display" class="election-description">Election description will appear
+                    here</div>
+            </div>
+            <p id="countdown" class="text-4xl font-bold text-center mt-4">Loading...</p>
             <p id="start-time-display" class="text-center mt-2 text-gray-600">Election Start: --:--</p>
             <p id="end-time-display" class="text-center text-gray-600">Election End: --:--</p>
+            <p id="status-display" class="text-center text-lg mt-2 font-bold">Status: --</p>
             <div class="mt-4 flex justify-center">
                 <button id="cancel-time-btn"
-                    class="bg-red-500 px-4 py-2 text-white rounded hover:bg-red-700 mr-2">Cancel Election
-                    Time</button>
+                    class="bg-red-500 px-4 py-2 text-white rounded hover:bg-red-700 mr-2">Cancel Election</button>
                 <button id="modify-time-btn"
                     class="bg-yellow-500 px-4 py-2 text-white rounded hover:bg-yellow-700">Modify Election
-                    Time</button>
+                    Details</button>
             </div>
         </div>
 
@@ -313,31 +358,38 @@
         function getAdminID() {
             return localStorage.getItem('userID');
         }
-        function getrole() {
-                return localStorage.getItem('role');
-            }
 
-        let startDate, endDate;
+        function getrole() {
+            return localStorage.getItem('role');
+        }
+
+        let startDate, endDate, electionName, electionDescription, electionStatus;
 
         document.addEventListener('DOMContentLoaded', function () {
-                const role = localStorage.getItem('role');
+            const role = localStorage.getItem('role');
 
-                if (!role || role.toLowerCase() !== 'admin') {
-                    alert("Access Denied! Only admins are allowed to view this page.");
-                    window.location.href = '/Dashboard';
-                    return;
-                }
+            if (!role || role.toLowerCase() !== 'admin') {
+                alert("Access Denied! Only admins are allowed to view this page.");
+                window.location.href = '/Dashboard';
+                return;
+            }
 
-                // If admin, proceed with election countdown
-                getElectionTime();
-                setInterval(updateCountdown, 1000);
-            });
-
+            // If admin, proceed with election countdown
+            getElectionTime();
+            setInterval(updateCountdown, 1000);
+        });
 
         document.getElementById('set-time-btn').addEventListener('click', function () {
             const startTime = document.getElementById('start-time').value;
             const endTime = document.getElementById('end-time').value;
+            const name = document.getElementById('election-name').value;
+            const description = document.getElementById('election-description').value;
             const adminID = getAdminID();
+
+            if (!name) {
+                showNotification('Please enter an election name.', 'error');
+                return;
+            }
 
             if (!startTime || !endTime) {
                 showNotification('Please select both start and end time.', 'error');
@@ -354,44 +406,56 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ adminID, startTime, endTime })
+                body: JSON.stringify({ adminID, startTime, endTime, name, description })
             })
                 .then(response => response.json())
                 .then(data => {
                     showNotification(data.message, 'success');
-                    if (data.message === "Election time set successfully") {
-                        displayCountdownUI(startTime, endTime);
+                    if (data.message.includes("Election time")) {
+                        displayCountdownUI(startTime, endTime, name, description, determineStatus(startTime, endTime));
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    showNotification('Failed to set election time.', 'error');
+                    showNotification('Failed to set election details.', 'error');
                 });
         });
 
         document.getElementById('cancel-time-btn').addEventListener('click', function () {
             const adminID = getAdminID();
-            fetch(`/api/countdown/delete/${adminID}`, {
-                method: 'DELETE'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    showNotification(data.message, 'success');
-                    document.getElementById('countdown-section').classList.add('hidden');
-                    document.getElementById('time-status').textContent = "Election time has been canceled.";
-                    document.getElementById('start-time').value = '';
-                    document.getElementById('end-time').value = '';
+
+            if (confirm("Are you sure you want to cancel this election? This action cannot be undone.")) {
+                fetch(`/api/countdown/delete/${adminID}`, {
+                    method: 'DELETE'
                 })
-                .catch(err => {
-                    console.error(err);
-                    showNotification('Failed to cancel election time.', 'error');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        showNotification(data.message, 'success');
+                        document.getElementById('countdown-section').classList.add('hidden');
+                        document.getElementById('time-status').textContent = "Election has been canceled.";
+                        document.getElementById('start-time').value = '';
+                        document.getElementById('end-time').value = '';
+                        document.getElementById('election-name').value = '';
+                        document.getElementById('election-description').value = '';
+                        document.getElementById('time-setting').classList.remove('hidden');
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showNotification('Failed to cancel election.', 'error');
+                    });
+            }
         });
 
         document.getElementById('modify-time-btn').addEventListener('click', function () {
             document.getElementById('countdown-section').classList.add('hidden');
             document.getElementById('time-setting').classList.remove('hidden');
-            document.getElementById('time-status').textContent = 'Please modify and set new election time.';
+            document.getElementById('time-status').textContent = 'Please modify and set new election details.';
+
+            // Pre-fill the existing values
+            document.getElementById('start-time').value = startDate.toISOString().slice(0, 16);
+            document.getElementById('end-time').value = endDate.toISOString().slice(0, 16);
+            document.getElementById('election-name').value = electionName || '';
+            document.getElementById('election-description').value = electionDescription || '';
         });
 
         function getElectionTime() {
@@ -400,23 +464,59 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.startTime && data.endTime) {
-                        displayCountdownUI(data.startTime, data.endTime);
+                        displayCountdownUI(
+                            data.startTime,
+                            data.endTime,
+                            data.name || 'Unnamed Election',
+                            data.description || 'No description provided',
+                            data.status || determineStatus(data.startTime, data.endTime)
+                        );
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    showNotification('Failed to fetch election time.', 'error');
+                    showNotification('Failed to fetch election details.', 'error');
                 });
         }
 
-        function displayCountdownUI(startTime, endTime) {
+        function determineStatus(startTime, endTime) {
+            const now = new Date();
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+
+            if (now < start) return 'upcoming';
+            if (now >= start && now < end) return 'ongoing';
+            return 'ended';
+        }
+
+        function displayCountdownUI(startTime, endTime, name, description, status) {
             startDate = new Date(startTime);
             endDate = new Date(endTime);
+            electionName = name;
+            electionDescription = description;
+            electionStatus = status;
 
+            document.getElementById('election-name-display').textContent = electionName;
+            document.getElementById('election-description-display').textContent = electionDescription;
             document.getElementById('start-time-display').textContent = `Election Start: ${startDate.toLocaleString()}`;
             document.getElementById('end-time-display').textContent = `Election End: ${endDate.toLocaleString()}`;
+            document.getElementById('status-display').textContent = `Status: ${formatStatus(electionStatus)}`;
             document.getElementById('time-setting').classList.add('hidden');
             document.getElementById('countdown-section').classList.remove('hidden');
+
+            updateCountdown();
+        }
+
+        function formatStatus(status) {
+            if (!status) return '--';
+
+            const statusMap = {
+                'upcoming': '🔜 Upcoming',
+                'ongoing': '🔄 Ongoing',
+                'ended': '✅ Ended'
+            };
+
+            return statusMap[status.toLowerCase()] || status;
         }
 
         function updateCountdown() {
@@ -424,14 +524,24 @@
 
             const now = new Date();
             let distance = startDate - now;
+            let newStatus = electionStatus;
 
             if (now >= startDate && now <= endDate) {
                 distance = endDate - now;
                 document.getElementById('countdown').textContent = `Ends in: ${formatTime(distance)}`;
+                newStatus = 'ongoing';
             } else if (now > endDate) {
                 document.getElementById('countdown').textContent = "Election Ended";
+                newStatus = 'ended';
             } else {
                 document.getElementById('countdown').textContent = `Starts in: ${formatTime(distance)}`;
+                newStatus = 'upcoming';
+            }
+
+            // Update status if changed
+            if (newStatus !== electionStatus) {
+                electionStatus = newStatus;
+                document.getElementById('status-display').textContent = `Status: ${formatStatus(electionStatus)}`;
             }
         }
 
@@ -471,6 +581,6 @@
             }, 3000);
         }
     </script>
-    </body>
-    
-    </html>
+</body>
+
+</html>

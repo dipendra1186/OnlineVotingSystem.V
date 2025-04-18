@@ -177,9 +177,8 @@
                     console.log("UserID to store:", data.user.userID || data.userID || "not found");
 
                     // Then store with the correct path
-                    localStorage.setItem('userID', data.user.userID); // or the correct path
-                    localStorage.setItem("user", JSON.stringify(data.user));
-                    localStorage.setItem('role', role);
+                    localStorage.setItem('userID', data.user.userID); 
+                    localStorage.setItem('role', data.user.role); 
                     window.location.href = "/Dashboard";
 
                     

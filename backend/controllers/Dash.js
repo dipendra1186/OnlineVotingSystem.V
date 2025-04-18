@@ -26,16 +26,31 @@ exports.getCandidates = async (req, res) => {
 // http://localhost:3000/api/dashboard/getVotes
 exports.getVotes = async (req, res) => {
     try {
+        // 1. Check for any ongoing or upcoming election
+        const [activeElections] = await db.execute(`
+            SELECT * FROM election_times
+            WHERE status IN ('upcoming', 'ongoing')
+        `);
+
+        // 2. If no active elections, reset votes
+        if (activeElections.length === 0) {
+            await db.execute(`UPDATE candidates SET vote_count = 0`);
+        }
+
+        // 3. Now fetch and return vote data
         const [rows] = await db.execute(`
             SELECT id AS candidate_id, name, vote_count AS total_votes
             FROM candidates
             ORDER BY total_votes DESC
         `);
+
         res.json(rows || []);
     } catch (err) {
+        console.error('Error in getVotes:', err);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 
