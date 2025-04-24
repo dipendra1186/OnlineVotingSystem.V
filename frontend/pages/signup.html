@@ -39,6 +39,11 @@
                 <input type="email" id="email" placeholder="Enter your email" required>
             </div>
             <div class="form-group">
+                <label for="nid">NID Number</label>
+                <input type="text" id="nid" placeholder="Enter your NID Number" required>
+            </div>
+
+            <div class="form-group">
                 <label for="passwordReg">Password</label>
                 <input type="password" id="passwordReg" placeholder="Enter your password" required>
             </div>
@@ -63,6 +68,7 @@
             const fullName = document.getElementById('name').value;
             const age = document.getElementById('age').value;
             const email = document.getElementById('email').value;
+            const nid = document.getElementById('nid').value;
             const password = document.getElementById('passwordReg').value;
             const photoFile = document.getElementById('photo').files[0];
 
@@ -73,6 +79,10 @@
 
             if (parseInt(age) < 18) {
                 alert('Age must be 18 or above');
+                return;
+            }
+            if (!nid) {
+                alert('NID Number is required');
                 return;
             }
 
@@ -104,6 +114,7 @@
                 age: age,
                 gender: document.getElementById('gender').value,
                 email: email,
+                nid: nid,
                 password: password,
                 photo: photoUrl
             };resizeBy

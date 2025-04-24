@@ -13,10 +13,26 @@ const resetPassword = async (req, res) => {
     try {
         connection = await db.getConnection();
 
-        const firstLetter = ID[0].toUpperCase();
-        const tablesToCheck = firstLetter === 'V'
-            ? [{ table: 'voters', idColumn: 'voterID' }, { table: 'admins', idColumn: 'adminID' }]
-            : [{ table: 'admins', idColumn: 'adminID' }, { table: 'voters', idColumn: 'voterID' }];
+        const firstChar = ID[0];
+        let tablesToCheck = [];
+
+        if (!isNaN(firstChar)) {
+            // Starts with a number: check `nid` in both tables
+            tablesToCheck = [
+                { table: 'voters', idColumn: 'nid' },
+                { table: 'admins', idColumn: 'nid' }
+            ];
+        } else if (firstChar.toUpperCase() === 'V') {
+            tablesToCheck = [
+                { table: 'voters', idColumn: 'voterID' },
+                { table: 'admins', idColumn: 'adminID' }
+            ];
+        } else {
+            tablesToCheck = [
+                { table: 'admins', idColumn: 'adminID' },
+                { table: 'voters', idColumn: 'voterID' }
+            ];
+        }
 
         let userFound = false, table = '', idColumn = '', currentPassword = '';
 

@@ -19,14 +19,17 @@ async function connectDB() {
 // Generate unique Admin or Voter ID
 async function generateUniqueID(role, fullName, connection) {
     const prefix = role === "Admin" ? "A" : "V";
+    const currentYear = new Date().getFullYear(); // Full year like 2025
     let uniqueID;
     let exists;
 
     do {
-        const nameParts = fullName.split(' ');
-        const firstInitial = nameParts[0].charAt(0).toUpperCase();
-        const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
-        uniqueID = `${prefix}${firstInitial}${lastInitial}${Math.floor(10000 + Math.random() * 90000)}`;
+        const nameParts = fullName.trim().split(' ');
+        const firstInitial = nameParts[0]?.charAt(0).toUpperCase() || "X";
+        const lastInitial = nameParts[nameParts.length - 1]?.charAt(0).toUpperCase() || "X";
+        const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+
+        uniqueID = `${prefix}${currentYear}${firstInitial}${lastInitial}${randomNum}`;
 
         const [rows] = await connection.execute(
             `SELECT * FROM ${role === "Admin" ? "admins" : "voters"} WHERE ${role === "Admin" ? "adminID" : "voterID"} = ?`,
@@ -39,14 +42,16 @@ async function generateUniqueID(role, fullName, connection) {
     return uniqueID;
 }
 
+
 // Main signup function
 const createCustomer = async (req, res) => {
     try {
-        const { fullName, age, gender, email, password, role, photo } = req.body;
+        const { fullName, age, gender, email, nid, password, role, photo } = req.body;
 
-        if (!fullName || !age || !gender || !email || !password || !role || !photo) {
-            return res.status(400).json({ message: 'All fields including photo are required' });
+        if (!fullName || !age || !gender || !email || !password || !role || !photo || !nid) {
+            return res.status(400).json({ message: 'All fields including photo and NID are required' });
         }
+
 
         const ageNum = parseInt(age);
         if (isNaN(ageNum) || ageNum < 18) {
@@ -70,6 +75,15 @@ const createCustomer = async (req, res) => {
             return res.status(400).json({ message: 'Email already exists' });
         }
 
+        const [existingNID] = await connection.execute(
+            `SELECT * FROM ${role === "Admin" ? "admins" : "voters"} WHERE nid = ?`,
+            [nid]
+        );
+        if (existingNID.length > 0) {
+            return res.status(400).json({ message: 'NID already exists' });
+        }
+
+
         // Generate ID and hash password
         const userID = await generateUniqueID(role, fullName, connection);
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -80,12 +94,13 @@ const createCustomer = async (req, res) => {
 
         // Insert user with photo into database
         const insertQuery = role === "Admin"
-            ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry, photo, nid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo, nid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         await connection.execute(insertQuery, [
-            fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo
+            fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, nid
         ]);
+
 
         console.log(`✅ Inserted user with ID: ${userID}`);
 

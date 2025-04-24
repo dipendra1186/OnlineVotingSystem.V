@@ -56,24 +56,50 @@ const forgotPassword = async (req, res) => {
     let connection;
     try {
         connection = await db.getConnection();
-        const firstLetter = ID[0].toUpperCase();
-        const tablesToCheck = firstLetter === 'V'
-            ? [{ table: 'voters', idColumn: 'voterID' }, { table: 'admins', idColumn: 'adminID' }]
-            : [{ table: 'admins', idColumn: 'adminID' }, { table: 'voters', idColumn: 'voterID' }];
 
         let userFound = false, userEmail = '', table = '', idColumn = '';
+        let query, params;
 
-        for (const tableInfo of tablesToCheck) {
-            const [users] = await connection.execute(
-                `SELECT email FROM ${tableInfo.table} WHERE ${tableInfo.idColumn} = ?`, 
-                [ID]
-            );
-            if (users.length > 0) {
-                userFound = true;
-                userEmail = users[0].email;
-                table = tableInfo.table;
-                idColumn = tableInfo.idColumn;
-                break;
+        // If the ID starts with 'V' or 'A', check the respective table (voters or admins)
+        if (ID[0].toUpperCase() === 'V' || ID[0].toUpperCase() === 'A') {
+            const firstLetter = ID[0].toUpperCase();
+            const tablesToCheck = firstLetter === 'V'
+                ? [{ table: 'voters', idColumn: 'voterID' }, { table: 'admins', idColumn: 'adminID' }]
+                : [{ table: 'admins', idColumn: 'adminID' }, { table: 'voters', idColumn: 'voterID' }];
+            
+            for (const tableInfo of tablesToCheck) {
+                [users] = await connection.execute(
+                    `SELECT email FROM ${tableInfo.table} WHERE ${tableInfo.idColumn} = ?`, 
+                    [ID]
+                );
+                if (users.length > 0) {
+                    userFound = true;
+                    userEmail = users[0].email;
+                    table = tableInfo.table;
+                    idColumn = tableInfo.idColumn;
+                    break;
+                }
+            }
+        } 
+        // If the ID starts with a number, check 'nid' column in both admins and voters tables
+        else if (!isNaN(ID[0])) {
+            const tablesToCheck = [
+                { table: 'voters', nidColumn: 'nid' },
+                { table: 'admins', nidColumn: 'nid' }
+            ];
+
+            for (const tableInfo of tablesToCheck) {
+                query = `SELECT email FROM ${tableInfo.table} WHERE ${tableInfo.nidColumn} = ?`;
+                params = [ID];
+                const [users] = await connection.execute(query, params);
+                
+                if (users.length > 0) {
+                    userFound = true;
+                    userEmail = users[0].email;
+                    table = tableInfo.table;
+                    idColumn = tableInfo.nidColumn;
+                    break;
+                }
             }
         }
 
@@ -100,5 +126,6 @@ const forgotPassword = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
 
 module.exports = forgotPassword;
