@@ -18,51 +18,6 @@
             overflow: hidden;
         }
 
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 250px;
-            height: 100vh;
-            background-color: #1e3a8a;
-            color: white;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-        }
-
-        .sidebar h2 {
-            font-size: 1.8rem;
-            margin-bottom: 2rem;
-            font-weight: 600;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            flex: 1;
-        }
-
-        .sidebar li {
-            margin: 1rem 0;
-        }
-
-        .sidebar a {
-            text-decoration: none;
-            color: white;
-            font-size: 1.1rem;
-            display: block;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: #3b82f6;
-        }
 
         .logout-btn {
             margin-top: 2rem;
@@ -179,21 +134,18 @@
 </head>
 
 <body>
-    <div class="sidebar">
-        <h2>User Profile Dashboard</h2>
-        <ul>
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/Candidate">Manage Candidates</a></li>
-            <li><a href="/vote">Manage Vote</a></li>
-            <li><a href="/countdown">Countdown</a></li>
-            <li><a href="/results">Results</a></li>
-            <li><a href="/verifyVoters">Verify Voters</a></li>
-            <li><a href="/profile" class="active">Profile</a></li>
-        </ul>
-        <button class="logout-btn">Logout</button>
-    </div>
+    
 
     <div class="main-content">
+        <!-- Cross Button to go back -->
+        <div style="text-align: right;">
+            <button onclick="goToDashboard()"
+                style="background: none; border: none; font-size: 2rem; color: #9ca3af; cursor: pointer; margin-bottom: 10px;">
+                &times;
+            </button>
+        </div>
+
+
         <div class="profile-container">
             <h2>User Profile</h2>
             <div id="debug-info" class="debug-info">
@@ -213,6 +165,18 @@
     </div>
 
     <script>
+
+        function goToDashboard() {
+                const role = localStorage.getItem('role')?.toLowerCase(); // get role from localStorage
+
+                if (role === 'voter') {
+                    window.location.href = '/vDashboard';  // if voter, go to vDashboard
+                } else if (role === 'admin') {
+                    window.location.href = '/dashboard';   // if admin, go to dashboard
+                } else {
+                    window.location.href = '/'; // fallback (optional: send to homepage if role not found)
+                }
+            }
         function updateDebug(message) {
             document.getElementById('debug-message').textContent = message;
             console.log("Debug:", message);

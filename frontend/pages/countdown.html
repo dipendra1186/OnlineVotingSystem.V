@@ -248,6 +248,30 @@
             background-color: #dc2626;
         }
 
+        .profile-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #1e3a8a;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .profile-link:hover {
+            color: #3b82f6;
+        }
+
+        .profile-icon {
+            width: 36px;
+            height: 36px;
+            background-color: #e0e7ff;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* Card view styling for Set Election Time */
         #time-setting {
             background-color: white;
@@ -282,8 +306,6 @@
             white-space: pre-line;
         }
     </style>
-
-
 </head>
 
 <body>
@@ -292,13 +314,25 @@
         <ul>
             <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/Candidate">Manage Candidates</a></li>
-            <li><a href="/vote">Manage Vote</a></li>
             <li><a href="/countdown" class="active">Countdown</a></li>
             <li><a href="/results">Results</a></li>
             <li><a href="/verifyVoters">Verify Voters</a></li>
-            <li><a href="/profile">Profile</a></li>
         </ul>
         <button class="logout-btn">Logout</button>
+    </div>
+
+    <!-- Top Header with Profile Link -->
+    <div class="top-header">
+        <a href="/profile" class="profile-link">
+            <div class="profile-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <span>Profile</span>
+        </a>
     </div>
 
     <!-- Main Content -->
@@ -353,6 +387,15 @@
 
     </div>
     </div>
+
+    <script>
+        // Function to preview photo before upload
+        function previewPhoto(event) {
+            const preview = document.getElementById('photoPreview');
+            preview.src = URL.createObjectURL(event.target.files[0]);
+            preview.classList.remove('hidden');
+        }
+    </script>
 
     <script>
         function getAdminID() {

@@ -176,14 +176,21 @@
                     console.log("User object:", data.user);
                     console.log("UserID to store:", data.user.userID || data.userID || "not found");
 
-                    // Then store with the correct path
-                    localStorage.setItem('userID', data.user.userID); 
-                    localStorage.setItem('role', data.user.role); 
-                    window.location.href = "/Dashboard";
+                    // Store data in localStorage
+                    localStorage.setItem('userID', data.user.userID);
+                    localStorage.setItem('role', data.user.role);
 
-                    
+                    // Redirect based on role
+                    const role = data.user.role.toLowerCase();
+                    if (role === 'voter') {
+                        window.location.href = "/vDashboard";
+                    } else if (role === 'admin') {
+                        window.location.href = "/dashboard";
+                    } else {
+                        window.location.href = "/"; // fallback
+                    }
                 } else {
-                    alert(data.message);
+                    alert('Login failed: ' + (data.message || 'Invalid credentials'));
                 }
             } catch (error) {
                 alert('Error: Unable to connect to the API');

@@ -193,11 +193,27 @@
             }
         }
     </style>
-
 </head>
 
 <body>
     <div class="sidebar">
+        <!-- Profile Section at top -->
+        <div class="flex flex-col items-center py-6">
+            <!-- Icon -->
+            <div class="bg-white rounded-full p-3 mb-2 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5.121 17.804A11.953 11.953 0 0112 15c2.577 0 4.947.816 6.879 2.195M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </div>
+        
+            <!-- Role or UserID will appear here -->
+            <h3 id="profileInfo" class="text-white text-sm font-semibold mb-1"></h3>
+        
+            <!-- View Profile link -->
+            <a href="/profile" class="text-blue-300 hover:text-white text-sm underline">View Profile</a>
+        </div>
         <h2>Welcome to Dashboard</h2>
         <ul>
             <li><a href="/dashboard" class="active">Dashboard</a></li>
@@ -206,7 +222,7 @@
             <li><a href="/countdown">Countdown</a></li>
             <li><a href="/results">Results</a></li>
             <li><a href="/verifyVoters">Verify Voters</a></li>
-            <li><a href="/profile">Profile</a></li>
+
         </ul>
         <button class="logout-btn">Logout</button>
     </div>
@@ -242,6 +258,24 @@
     <script>
         let electionEndTime = null;
         let countdownInterval = null;
+
+        const role = localStorage.getItem('role')?.toLowerCase();
+        const userID = localStorage.getItem('userID');
+
+        console.log('Role:', role);
+        console.log('UserID:', userID);
+
+        const profileInfo = document.getElementById('profileInfo');
+
+        if (profileInfo) {
+            if (role) {
+                profileInfo.innerText = role;   // First try showing role
+            } else if (userID) {
+                profileInfo.innerText = userID; // If no role, fallback to userID
+            } else {
+                profileInfo.innerText = 'Guest'; // fallback default
+            }
+        }
 
         async function fetchTotalVoters() {
             try {

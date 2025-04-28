@@ -106,11 +106,6 @@ const createCustomer = async (req, res) => {
 
         await sendOTP(email, otp, userID, role, photo);
 
-        // ✅ Store session values here
-        req.session.userID = userID;
-        req.session.userEmail = email;
-        req.session.role = role;
-
         res.status(200).json({
             success: true,
             message: `User registered successfully as ${role}. Check your email for your ${role === "Admin" ? "Admin ID" : "Voter ID"}.`,
