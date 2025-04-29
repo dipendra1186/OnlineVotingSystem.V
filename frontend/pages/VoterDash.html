@@ -439,7 +439,9 @@
         <ul>
             <li><a href="/vDashboard" class="active">Dashboard</a></li>
             <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/notice">Notices</a></li>
             <li><a href="/results">Results</a></li>
+            <li><a href="/help">Help & Support</a></li>
         </ul>
         <button class="logout-btn">Logout</button>
     </div>
@@ -554,33 +556,51 @@
             // Fetch and Load Notifications
             // -------------------------------
             async function loadNotifications() {
-                try {
-                    const response = await fetch('/api/notifications');
-                    const data = await response.json();
+                    try {
+                        const response = await fetch('/api/notifications');
+                        const data = await response.json();
 
-                    const notificationsContainer = document.getElementById('notificationsContainer');
-                    notificationsContainer.innerHTML = '';
+                        const notificationsContainer = document.getElementById('notificationsContainer');
+                        notificationsContainer.innerHTML = '';
 
-                    if (data.success && data.notifications.length > 0) {
-                        data.notifications.forEach(notification => {
-                            const notificationElement = document.createElement('div');
-                            notificationElement.className = 'p-4 border-b border-gray-200';
+                        if (data.success && data.notifications.length > 0) {
+                            // Determine how many notifications to show (up to 5)
+                            const notificationsToShow = data.notifications.slice(0, 5);
+                            const hasMoreNotifications = data.notifications.length > 5;
 
-                            notificationElement.innerHTML = `
-                                <h3 class="font-semibold text-lg">${notification.title}</h3>
-                                <p class="text-gray-600">${notification.message}</p>
-                            `;
+                            // Create notification elements for the first 5 notifications
+                            notificationsToShow.forEach(notification => {
+                                const notificationElement = document.createElement('div');
+                                notificationElement.className = 'p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors';
 
-                            notificationsContainer.appendChild(notificationElement);
-                        });
-                    } else {
-                        notificationsContainer.innerHTML = '<p class="text-gray-500 py-4">No notifications found.</p>';
+                                notificationElement.innerHTML = `
+                    <h3 class="font-semibold text-lg">${notification.title}</h3>
+                `;
+
+                                notificationsContainer.appendChild(notificationElement);
+                            });
+
+                            // Add "See All" button if there are more than 5 notifications
+                            if (hasMoreNotifications) {
+                                const seeAllElement = document.createElement('div');
+                                seeAllElement.className = 'mt-4 text-center';
+
+                                seeAllElement.innerHTML = `
+                    <a href="/notice" class="text-blue-600 hover:text-blue-800 font-medium">
+                        See All Notifications (${data.notifications.length})
+                    </a>
+                `;
+
+                                notificationsContainer.appendChild(seeAllElement);
+                            }
+                        } else {
+                            notificationsContainer.innerHTML = '<p class="text-gray-500 py-4">No notifications found.</p>';
+                        }
+                    } catch (error) {
+                        console.error('Error loading notifications:', error);
+                        document.getElementById('notificationsContainer').innerHTML = '<p class="text-red-500 py-4">Failed to load notifications.</p>';
                     }
-                } catch (error) {
-                    console.error('Error loading notifications:', error);
-                    document.getElementById('notificationsContainer').innerHTML = '<p class="text-red-500 py-4">Failed to load notifications.</p>';
                 }
-            }
 
             // -------------------------------
             // Fetch and Load Election Details

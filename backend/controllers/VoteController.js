@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const blockchain = require("../controllers/blockchain");
+const crypto = require("crypto");
 
 // Get all candidates
 exports.getCandidates = async (req, res) => {
@@ -35,14 +37,11 @@ exports.castVote = async (req, res) => {
     const { voterID, candidateID } = req.body;
 
     if (!voterID || !candidateID) {
-        return res.status(400).json({ message: "Invalid vote data. Please ensure both voter ID and candidate are provided." });
+        return res.status(400).json({ message: "Invalid vote data." });
     }
 
     try {
-        console.log("Voter ID:", voterID, "Candidate ID:", candidateID);
-
         const [voter] = await db.execute("SELECT has_voted FROM voters WHERE voterID = ?", [voterID]);
-        console.log("Voter Check Result:", voter);
 
         if (voter.length === 0) {
             return res.status(404).json({ message: "Voter not found." });
@@ -52,16 +51,24 @@ exports.castVote = async (req, res) => {
             return res.status(400).json({ message: "You have already voted." });
         }
 
-        // Mark voter as voted
+        // Mark as voted and increment candidate vote count
         await db.execute("UPDATE voters SET has_voted = 1 WHERE voterID = ?", [voterID]);
-
-        // Correctly increment vote_count in candidates table
         await db.execute("UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?", [candidateID]);
+
+        // 🔒 Hash voterID for privacy
+        const hashedVoterID = crypto.createHash("sha256").update(voterID).digest("hex");
+
+        // 📦 Add block to blockchain
+        const newBlock = blockchain.addBlock({
+            voter: hashedVoterID,
+            candidateID,
+        });
+
+        console.log("New Block Added:", newBlock);
 
         res.json({ message: "Your vote has been cast successfully!" });
     } catch (err) {
-        console.error("Error casting vote:", err);
-        res.status(500).json({ message: "Internal server error while casting vote." });
+        console.error(err);
+        res.status(500).json({ message: "Something went wrong while casting your vote." });
     }
 };
-

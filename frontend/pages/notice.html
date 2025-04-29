@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>All Notices</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <!-- Your CSS styling (already perfect) is here -->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+    
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+    
+        .sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+    
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+    
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+    
+        .sidebar li {
+            margin: 1rem 0;
+        }
+    
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+    
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
+        }
+    
+        .logout-btn {
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+    
+        .main-content {
+            margin-left: 250px;
+            padding: 2.5rem;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+    
+        .main-content h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+    
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+    
+        .bg-white {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+    
+        .bg-white:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+    
+        .bg-white h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+    
+        .bg-white p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+    
+        canvas {
+            width: 100%;
+            height: 300px;
+            margin-top: 2rem;
+        }
+    
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3b82f6;
+        }
+    
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+    
+        .badge-success {
+            background-color: #10b981;
+            color: white;
+        }
+    
+        .badge-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+    
+        .badge-pending {
+            background-color: #6b7280;
+            color: white;
+        }
+    
+        .vote-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    
+        .vote-btn:hover {
+            background-color: #2563eb;
+        }
+    
+        .vote-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+    
+        /* Flexbox container for splitting the sections */
+        .flex {
+            display: flex;
+        }
+    
+        .space-x-6 {
+            gap: 1.5rem;
+        }
+    
+        .flex-1 {
+            flex: 1;
+        }
+    
+        /* Notification Styling */
+        .notification {
+            background-color: #f3f4f6;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+    
+        .notification.important {
+            border-left-color: #ef4444;
+        }
+    
+        .notification time {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 2rem 0;
+            position: relative;
+        }
+    
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+    
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+    
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            background-color: #e5e7eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: bold;
+        }
+    
+        .step.active .step-circle {
+            background-color: #3b82f6;
+            color: white;
+        }
+    
+        .step.completed .step-circle {
+            background-color: #10b981;
+            color: white;
+        }
+    
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+                padding: 1.5rem;
+                display: none;
+            }
+    
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+                box-sizing: border-box;
+            }
+    
+            .grid {
+                grid-template-columns: 1fr;
+            }
+    
+            .sidebar a {
+                font-size: 1rem;
+            }
+    
+            .bg-white {
+                padding: 1rem;
+            }
+    
+            .bg-white h3 {
+                font-size: 1rem;
+            }
+    
+            .bg-white p {
+                font-size: 1.2rem;
+            }
+    
+            .logout-btn {
+                padding: 0.7rem;
+                font-size: 1rem;
+            }
+    
+            /* Main Container Styles */
+            .bg-white {
+                background-color: #ffffff;
+            }
+    
+            .p-6 {
+                padding: 1.5rem;
+            }
+    
+            .mt-6 {
+                margin-top: 1.5rem;
+            }
+    
+            .shadow {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            }
+    
+            .rounded {
+                border-radius: 8px;
+            }
+    
+            /* Title Styling */
+            h2.text-xl {
+                font-size: 1.25rem;
+                font-weight: bold;
+                color: #333333;
+            }
+    
+            h2.font-bold {
+                font-weight: 600;
+            }
+    
+            /* Featured Election Card */
+            #featuredelection {
+                margin-top: 1rem;
+            }
+    
+            #featuredelection .bg-gray-100 {
+                background-color: #f7fafc;
+                padding: 1.25rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+    
+            #featuredelection .bg-gray-100:hover {
+                transform: scale(1.02);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            }
+    
+            #featuredelection h3 {
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: #333333;
+            }
+    
+            #featuredelection p {
+                color: #4a5568;
+                font-size: 0.875rem;
+                line-height: 1.5;
+            }
+    
+            #featuredelection .text-sm {
+                font-size: 0.875rem;
+                color: #6b7280;
+            }
+    
+            #featuredelection .text-gray-500 {
+                color: #6b7280;
+            }
+    
+            /* Election Status Styling */
+            .status-container {
+                margin-top: 1rem;
+            }
+    
+            .status-container .status-label {
+                font-weight: 600;
+                font-size: 0.875rem;
+                color: #4a5568;
+            }
+    
+            .status-container .status-value {
+                font-size: 1rem;
+                color: #2d3748;
+            }
+    
+            .status-container .status-value.upcoming {
+                color: #38a169;
+            }
+    
+            .status-container .status-value.ongoing {
+                color: #f6ad55;
+            }
+    
+            .status-container .status-value.ended {
+                color: #e53e3e;
+            }
+    
+            /* Loading Text Styling */
+            #featuredelection p.text-gray-500 {
+                font-size: 1rem;
+                color: #6b7280;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <!-- Sidebar code here (Profile, Navigation, Logout button) -->
+        <h2>Notices</h2>
+        <ul>
+            <li><a href="/vDashboard">Dashboard</a></li>
+            <li><a href="/vote">Manage Vote</a></li>
+            <li><a href="/notice" class="active">Notices</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/help">Help & Support</a></li>
+        </ul>
+        <button class="logout-btn">Logout</button>
+        </div>
+    </div>
+
+    <div class="main-content flex-1 p-6">
+        <h1 class="text-2xl font-bold mb-6">Notices</h1>
+
+        <ul id="notice-list" class="space-y-4">
+            <!-- Notices will be dynamically inserted here -->
+        </ul>
+
+        <a href="/dashboard" class="mt-10 text-blue-600 underline hover:text-blue-800">← Back to Dashboard</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const noticeList = document.getElementById('notice-list');
+
+            try {
+                const response = await fetch('/api/notice');
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.length === 0) {
+                        noticeList.innerHTML = '<li class="text-center text-gray-500">No notices found.</li>';
+                    } else {
+                        // Clear any existing content
+                        noticeList.innerHTML = '';
+
+                        data.forEach(notice => {
+                            const li = document.createElement('li');
+                            li.className = 'bg-white p-4 rounded shadow-md mb-4';
+
+                            li.innerHTML = `
+                                <h2 class="text-lg font-semibold mb-2">${notice.title}</h2>
+                                <p class="text-gray-700 mb-2">${notice.message}</p>
+                                <time class="text-sm text-gray-500">${new Date(notice.created_at).toLocaleString()}</time>
+                            `;
+
+                            noticeList.appendChild(li);
+                        });
+                    }
+                } else {
+                    noticeList.innerHTML = '<li class="text-center text-red-500">Failed to load notices.</li>';
+                }
+            } catch (error) {
+                console.error('Error fetching notices:', error);
+                noticeList.innerHTML = '<li class="text-center text-red-500">Error fetching notices.</li>';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

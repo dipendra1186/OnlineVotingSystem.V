@@ -99,8 +99,8 @@ const updateElectionStatus = async () => {
     try {
         const [electionRows] = await pool.query('SELECT * FROM election_times ORDER BY id DESC LIMIT 1');
 
-        if (electionRows.length === 0) {
-            console.error('❌ No election time found in database.');
+        if (!electionRows || electionRows.length === 0) {
+            console.warn('⚠️ No election time found in database.');
             return;
         }
 
@@ -119,15 +119,30 @@ const updateElectionStatus = async () => {
             newStatus = 'ended';
         }
 
-        // Only update if status actually changed
         if (newStatus !== status) {
             await pool.query('UPDATE election_times SET status = ?, updated_at = NOW() WHERE id = ?', [newStatus, id]);
             console.log(`✅ Election status updated to: ${newStatus}`);
         }
     } catch (err) {
-        console.error("🚨 Error updating election status:", err);
+        if (err.code === 'ECONNREFUSED') {
+            console.error('❌ Database connection refused. Skipping this check.');
+        } else {
+            console.error('🚨 Unexpected error updating election status:', err.message || err);
+        }
     }
 };
+const startElectionStatusUpdater = async () => {
+    try {
+        await pool.query('SELECT 1');
+        console.log('✅ Database connected. Starting election status updater...');
+        setInterval(updateElectionStatus, 1000);
+    } catch (err) {
+        console.error('❌ Cannot start updater. Database connection failed:', err.message);
+    }
+};
+
+startElectionStatusUpdater();
+
 
 setInterval(updateElectionStatus, 1000); // every second
 
