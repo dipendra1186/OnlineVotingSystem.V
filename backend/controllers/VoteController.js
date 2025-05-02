@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const blockchain = require("../controllers/blockchain");
+const blockchain = require("../blockchain/blockchain");
 const crypto = require("crypto");
 
 // Get all candidates
@@ -37,15 +37,21 @@ exports.castVote = async (req, res) => {
     const { voterID, candidateID } = req.body;
 
     if (!voterID || !candidateID) {
-        return res.status(400).json({ message: "Invalid vote data." });
+        return res.status(400).json({ message: "Invalid vote data. Both voterID and candidateID are required." });
     }
 
     try {
-        const [voter] = await db.execute("SELECT has_voted FROM voters WHERE voterID = ?", [voterID]);
+        // Check if the voter exists and get their voting and verification status
+            const [voter] = await db.execute("SELECT has_voted, isVerified FROM voters WHERE voterID = ?", [voterID]);
 
-        if (voter.length === 0) {
-            return res.status(404).json({ message: "Voter not found." });
-        }
+            if (voter.length === 0) {
+                return res.status(404).json({ message: "Voter not found." });
+            }
+
+            if (voter[0].isVerified !== 1) {
+                return res.status(403).json({ message: "You are not verified to vote. Please verify your identity." });
+            }
+
 
         if (voter[0].has_voted === 1) {
             return res.status(400).json({ message: "You have already voted." });
@@ -58,17 +64,24 @@ exports.castVote = async (req, res) => {
         // 🔒 Hash voterID for privacy
         const hashedVoterID = crypto.createHash("sha256").update(voterID).digest("hex");
 
-        // 📦 Add block to blockchain
-        const newBlock = blockchain.addBlock({
-            voter: hashedVoterID,
-            candidateID,
-        });
+        // ✅ Log the vote data for debugging
+        console.log("Hashed Voter ID:", hashedVoterID);
+        console.log("Candidate ID:", candidateID);
 
-        console.log("New Block Added:", newBlock);
+        // ✅ Add block to blockchain once and await
+        const result = await blockchain.addBlock({ voter: hashedVoterID, candidate: candidateID });
 
-        res.json({ message: "Your vote has been cast successfully!" });
+        // Log the result
+        console.log("Blockchain block added:", result);
+
+        return res.status(200).json({ message: "Your vote has been cast successfully!", block: result });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Something went wrong while casting your vote." });
+        // Log the error for debugging
+        console.error("Error casting vote:", err);
+
+        // Return a detailed error message in the response
+        return res.status(500).json({ message: err.message || "Something went wrong while casting your vote." });
     }
 };
+

@@ -5,7 +5,7 @@ class Block {
     constructor(index, timestamp, data, previousHash = "") {
         this.index = index;
         this.timestamp = timestamp;
-        this.data = data; // Contains hashed voterID, candidateID
+        this.data = data; // Contains hashed voterID and candidateID
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
     }
@@ -28,10 +28,27 @@ class Blockchain {
     }
 
     getLatestBlock() {
+        if (this.chain.length === 0) {
+            throw new Error("Blockchain is empty — no latest block available.");
+        }
         return this.chain[this.chain.length - 1];
     }
 
-    addBlock(newData) {
+    async addBlock(newData) {
+        // Extract hashed voterID
+        const hashedVoterID = newData.voter;
+
+        // ✅ Check for duplicate vote in the DB
+        const [rows] = await db.execute(
+            "SELECT * FROM blockchain WHERE JSON_EXTRACT(data, '$.voter') = ?",
+            [hashedVoterID]
+        );
+
+        if (rows.length > 0) {
+            // 🛑 Instead of throwing, return a rejected Promise to handle it in controller
+            throw new Error("You have already voted.");
+        }
+
         const latestBlock = this.getLatestBlock();
         const newBlock = new Block(
             latestBlock.index + 1,
@@ -41,16 +58,13 @@ class Blockchain {
         );
 
         this.chain.push(newBlock);
-
-        // Save to database for security
-        this.saveBlockToDatabase(newBlock);
+        await this.saveBlockToDatabase(newBlock);
 
         return newBlock;
     }
 
     async saveBlockToDatabase(block) {
         const { index, timestamp, data, previousHash, hash } = block;
-
         const query = `INSERT INTO blockchain (\`index\`, timestamp, data, previousHash, hash) VALUES (?, ?, ?, ?, ?)`;
 
         try {
@@ -72,12 +86,23 @@ class Blockchain {
         return true;
     }
 
-    // Optionally, you can retrieve blocks from the database to ensure synchronization
     async loadBlockchainFromDatabase() {
         const query = "SELECT * FROM blockchain ORDER BY `index`";
         try {
             const [rows] = await db.execute(query);
-            const blocks = rows.map((row) => new Block(row.index, row.timestamp, JSON.parse(row.data), row.previousHash));
+
+            if (rows.length === 0) {
+                // Reinitialize with Genesis Block
+                const genesisBlock = this.createGenesisBlock();
+                this.chain = [genesisBlock];
+                await this.saveBlockToDatabase(genesisBlock);
+                return this.chain;
+            }
+
+            const blocks = rows.map(
+                (row) => new Block(row.index, row.timestamp, JSON.parse(row.data), row.previousHash)
+            );
+            this.chain = blocks;
             return blocks;
         } catch (err) {
             console.error("Error loading blockchain from database:", err);

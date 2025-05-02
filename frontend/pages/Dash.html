@@ -11,7 +11,7 @@
         * {
             box-sizing: border-box;
         }
-
+    
         body {
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
@@ -20,7 +20,7 @@
             height: 100vh;
             overflow: hidden;
         }
-
+    
         .sidebar {
             position: fixed;
             width: 250px;
@@ -31,23 +31,23 @@
             display: flex;
             flex-direction: column;
         }
-
+    
         .sidebar h2 {
             font-size: 1.8rem;
             margin-bottom: 2rem;
             font-weight: 600;
         }
-
+    
         .sidebar ul {
             list-style: none;
             padding: 0;
             flex: 1;
         }
-
+    
         .sidebar li {
             margin: 1rem 0;
         }
-
+    
         .sidebar a {
             text-decoration: none;
             color: white;
@@ -57,12 +57,12 @@
             border-radius: 8px;
             transition: background-color 0.3s ease;
         }
-
+    
         .sidebar a:hover,
         .sidebar a.active {
             background-color: #3b82f6;
         }
-
+    
         .logout-btn {
             margin-top: 2rem;
             background-color: #ef4444;
@@ -74,11 +74,11 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
+    
         .logout-btn:hover {
             background-color: #dc2626;
         }
-
+    
         .main-content {
             margin-left: 250px;
             padding: 2.5rem;
@@ -89,19 +89,19 @@
             height: 100vh;
             box-sizing: border-box;
         }
-
+    
         .main-content h1 {
             font-size: 2rem;
             font-weight: bold;
             margin-bottom: 2rem;
         }
-
+    
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
         }
-
+    
         .bg-white {
             background-color: white;
             padding: 1.5rem;
@@ -109,84 +109,107 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
+    
         .bg-white:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
-
+    
         .bg-white h3 {
             font-size: 1.2rem;
             margin-bottom: 1rem;
             font-weight: 600;
         }
-
+    
         .bg-white p {
             font-size: 1.5rem;
             font-weight: bold;
         }
-
+    
         .bg-white .text-2xl {
             font-size: 1.5rem;
         }
-
+    
         .bg-white .text-lg {
             font-size: 1.2rem;
         }
-
+    
         .shadow {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         }
-
+    
         .mt-6 {
             margin-top: 1.5rem;
         }
-
+    
         .countdown {
             font-size: 2rem;
             font-weight: bold;
         }
-
+    
         canvas {
             width: 100%;
             height: 300px;
             margin-top: 2rem;
         }
-
+    
+        .election-selector {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+    
+        .election-selector select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+    
+        .election-selector select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+    
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
                 padding: 1.5rem;
                 display: none;
             }
-
+    
             .main-content {
                 margin-left: 0;
                 width: 100%;
                 padding: 1.5rem;
                 box-sizing: border-box;
             }
-
+    
             .grid {
                 grid-template-columns: 1fr;
             }
-
+    
             .sidebar a {
                 font-size: 1rem;
             }
-
+    
             .bg-white {
                 padding: 1rem;
             }
-
+    
             .bg-white h3 {
                 font-size: 1rem;
             }
-
+    
             .bg-white p {
                 font-size: 1.2rem;
             }
-
+    
             .logout-btn {
                 padding: 0.7rem;
                 font-size: 1rem;
@@ -228,6 +251,14 @@
 
     <div class="main-content flex-1 p-6">
         <h1 class="text-2xl font-bold">Dashboard Overview</h1>
+        <!-- Election Selector -->
+        <div class="election-selector">
+            <h3 class="text-lg font-semibold mb-2">Select Election</h3>
+            <select id="electionSelector" class="border-gray-300 focus:ring-2 focus:ring-blue-500">
+                <option value="">Loading elections...</option>
+            </select>
+        </div>
+    
         <div class="grid grid-cols-3 gap-6 mt-4">
             <div class="bg-white p-4 rounded shadow">
                 <h3 class="text-lg">Total Voters</h3>
@@ -242,63 +273,102 @@
                 <p class="text-2xl font-bold" id="votesCast">0</p>
             </div>
         </div>
-
+    
         <div class="bg-white p-6 mt-6 shadow rounded">
             <h2 class="text-xl font-bold">Election Countdown</h2>
             <p id="countdown" class="text-2xl font-bold">Loading...</p>
         </div>
-
+    
         <div class="bg-white p-6 mt-6 shadow rounded">
             <h2 class="text-xl font-bold">Live Vote Count</h2>
             <canvas id="voteChart"></canvas>
         </div>
     </div>
-
+    
     <script>
         let electionEndTime = null;
         let countdownInterval = null;
+        let voteChartInstance = null;
 
-        const role = localStorage.getItem('role')?.toLowerCase();
-        const userID = localStorage.getItem('userID');
+        // Load initial data
+        fetchElections();
+        fetchTotalVoters();
 
-        console.log('Role:', role);
-        console.log('UserID:', userID);
-
-        const profileInfo = document.getElementById('profileInfo');
-
-        if (profileInfo) {
-            if (role) {
-                profileInfo.innerText = role;   // First try showing role
-            } else if (userID) {
-                profileInfo.innerText = userID; // If no role, fallback to userID
-            } else {
-                profileInfo.innerText = 'Guest'; // fallback default
-            }
-        }
-
-        async function fetchTotalVoters() {
-            try {
-                const response = await fetch('http://localhost:3000/api/dashboard/totalVoters');
-                if (response.ok) {
-                    const data = await response.json();
-                    const totalVoters = data.totalVoters || 0;
-                    document.getElementById('totalVoters').innerText = totalVoters;
-                } else {
-                    console.error('Failed to fetch total voters');
+        // Total voters (not dependent on election)
+            async function fetchTotalVoters() {
+                try {
+                    const res = await fetch('http://localhost:3000/api/dashboard/totalVoters');
+                    const data = await res.json();
+                    document.getElementById('totalVoters').innerText = data.totalVoters || 0;
+                } catch (error) {
+                    console.error('Error fetching total voters:', error);
                 }
+            }
+
+
+        // On election change
+        document.getElementById("electionSelector").addEventListener("change", function () {
+            const electionId = this.value;
+            if (electionId) {
+                updateDashboardForElection(electionId);
+                fetchElectionEndTime(electionId);
+            }
+        });
+
+        // Load elections into dropdown
+        async function fetchElections() {
+            try {
+                const response = await fetch("http://localhost:3000/api/dashboard/allElections");
+                const data = await response.json();
+
+                const selector = document.getElementById("electionSelector");
+                selector.innerHTML = "<option value=''>-- Select Election --</option>";
+
+                data.forEach(election => {
+                    const option = document.createElement("option");
+                    option.value = election.id;
+                    option.textContent = election.name;
+                    selector.appendChild(option);
+                });
             } catch (error) {
-                console.error('Error fetching total voters:', error);
+                console.error("Failed to load elections:", error);
             }
         }
 
-        async function fetchElectionEndTime() {
+        // Update dashboard based on selected election
+            async function updateDashboardForElection(electionId) {
+                try {
+                    // Fetch Candidates
+                    const candidatesRes = await fetch(`http://localhost:3000/api/dashboard/candidates/${electionId}`);
+                    const candidates = await candidatesRes.json();
+                    document.getElementById("totalCandidates").innerText = candidates.length;
+
+                    // ✅ Fetch total votes using vote_count column from candidates table
+                    const totalVotesRes = await fetch(`http://localhost:3000/api/dashboard/totalVotesByElection/${electionId}`);
+                    const { totalVotes } = await totalVotesRes.json();
+                    document.getElementById("votesCast").innerText = totalVotes || 0;
+
+                    // ✅ Fetch liveVotes (for graph) only
+                    const response = await fetch(`http://localhost:3000/api/dashboard/elections/${electionId}/liveVotes`);
+
+                    const votes = await response.json();
+
+                    updateVoteChart(votes);
+                } catch (error) {
+                    console.error("Error updating dashboard:", error);
+                }
+            }
+
+        // Load election end time for countdown
+        async function fetchElectionEndTime(electionId) {
             try {
-                const response = await fetch('http://localhost:3000/api/dashboard/electionEndTime');
-                const data = await response.json();
+                const res = await fetch(`http://localhost:3000/api/dashboard/electionEndTime/${electionId}`);
+                const data = await res.json();
 
                 if (data && data.end_time) {
                     electionEndTime = new Date(data.end_time);
                     updateCountdown();
+                    if (countdownInterval) clearInterval(countdownInterval);
                     countdownInterval = setInterval(updateCountdown, 1000);
                 }
             } catch (error) {
@@ -306,99 +376,67 @@
             }
         }
 
+
+        // Countdown Timer
         function updateCountdown() {
             const now = new Date();
             const timeLeft = electionEndTime - now;
+            const countdown = document.getElementById('countdown');
 
             if (timeLeft <= 0) {
-                document.getElementById('countdown').textContent = 'Election Ended';
+                countdown.textContent = 'Election Ended';
                 clearInterval(countdownInterval);
             } else {
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-                document.getElementById('countdown').textContent = `${hours}h ${minutes}m ${seconds}s`;
+                const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                countdown.textContent = `${h}h ${m}m ${s}s`;
             }
         }
 
-        async function fetchVotesCast() {
-            try {
-                const response = await fetch('http://localhost:3000/api/dashboard/getVotes');
-                if (response.ok) {
-                    const data = await response.json();
-                    const totalVotes = data.reduce((acc, candidate) => acc + candidate.total_votes, 0);
-                    document.getElementById('votesCast').innerText = totalVotes;
-                } else {
-                    console.error('Failed to fetch vote data');
-                }
-            } catch (error) {
-                console.error('Error fetching vote data:', error);
-            }
-        }
+        function updateVoteChart(voteData) {
+                const ctx = document.getElementById('voteChart').getContext('2d');
 
-        async function fetchVoteData() {
-            try {
-                const response = await fetch('http://localhost:3000/api/dashboard/getVotes');
-                if (response.ok) {
-                    const data = await response.json();
-                    updateVoteChart(data);
-                } else {
-                    console.error('Failed to fetch vote data');
-                }
-            } catch (error) {
-                console.error('Error fetching vote data:', error);
-            }
-        }
+                const labels = voteData.map(candidate => candidate.name);
+                const data = voteData.map(candidate => candidate.vote_count);
 
-        function updateVoteChart(data) {
-            const ctx = document.getElementById('voteChart').getContext('2d');
-            const voteChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(candidate => candidate.name),
+                const chartData = {
+                    labels: labels,
                     datasets: [{
                         label: 'Votes',
-                        data: data.map(candidate => candidate.total_votes),
-                        backgroundColor: '#3b82f6',
-                        borderColor: '#3b82f6',
+                        data: data,
+                        backgroundColor: [
+                            '#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0'
+                        ],
                         borderWidth: 1
                     }]
-                },
-                options: {
+                };
+
+                const options = {
+                    responsive: true,
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
                         }
                     }
+                };
+
+                // Destroy old chart if exists
+                if (voteChartInstance) {
+                    voteChartInstance.destroy();
                 }
-            });
-        }
 
-        // Fetch the candidate data and display the total number of candidates
-        document.addEventListener('DOMContentLoaded', () => {
-            const candidateCountElement = document.getElementById('totalCandidates');
-
-            // Fetch candidates from the API
-            fetch('http://localhost:3000/api/candidates')  // Make sure the URL is correct
-                .then(response => response.json())
-                .then(data => {
-                    // Display the number of candidates
-                    const totalCandidates = data.length; // Length of the array represents total candidates
-                    candidateCountElement.textContent = totalCandidates;
-                })
-                .catch(err => {
-                    console.error('Error fetching candidates:', err);
-                    candidateCountElement.textContent = 'Error fetching data';
+                voteChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: options
                 });
-        });
+            }
 
-        // Initialize the dashboard
-        fetchTotalVoters();
-        fetchElectionEndTime();
-        fetchVotesCast();
-        fetchVoteData();
     </script>
+
+
 </body>
 
 </html>
