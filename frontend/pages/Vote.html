@@ -6,194 +6,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vote - Election System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-<style>
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #f1f5f9;
-        display: flex;
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    .sidebar {
-        position: fixed;
-        width: 250px;
-        height: 100vh;
-        background-color: #1e3a8a;
-        color: white;
-        padding: 2rem 1rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .sidebar h2 {
-        font-size: 1.8rem;
-        margin-bottom: 2rem;
-        font-weight: 600;
-    }
-
-    .sidebar ul {
-        list-style: none;
-        padding: 0;
-        flex: 1;
-    }
-
-    .sidebar li {
-        margin: 1rem 0;
-    }
-
-    .sidebar a {
-        text-decoration: none;
-        color: white;
-        font-size: 1.1rem;
-        display: block;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        transition: background-color 0.3s ease;
-    }
-
-    .sidebar a:hover,
-    .sidebar a.active {
-        background-color: #3b82f6;
-    }
-
-    .logout-btn {
-        margin-top: 2rem;
-        background-color: #ef4444;
-        border: none;
-        padding: 0.8rem;
-        font-size: 1.1rem;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .logout-btn:hover {
-        background-color: #dc2626;
-    }
-
-    .main-content {
-        margin-left: 250px;
-        padding: 2.5rem;
-        width: calc(100% - 250px);
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        box-sizing: border-box;
-    }
-
-    .main-content h1 {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 2rem;
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-    }
-
-    .bg-white {
-        background-color: white;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .bg-white:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .bg-white h3 {
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-        font-weight: 600;
-    }
-
-    .bg-white p {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .bg-white .text-2xl {
-        font-size: 1.5rem;
-    }
-
-    .bg-white .text-lg {
-        font-size: 1.2rem;
-    }
-
-    .shadow {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .mt-6 {
-        margin-top: 1.5rem;
-    }
-
-    .countdown {
-        font-size: 2rem;
-        font-weight: bold;
-    }
-
-    /* Chart Section */
-    canvas {
-        width: 100%;
-        height: 300px;
-        margin-top: 2rem;
-    }
-
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-        .sidebar {
-            width: 200px;
-            padding: 1.5rem;
-            display: none;
-        }
-
-        .main-content {
-            margin-left: 0;
-            width: 100%;
-            padding: 1.5rem;
+    <style>
+        * {
             box-sizing: border-box;
         }
 
-        .grid {
-            grid-template-columns: 1fr;
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar li {
+            margin: 1rem 0;
         }
 
         .sidebar a {
-            font-size: 1rem;
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
         }
 
-        .bg-white {
-            padding: 1rem;
-        }
-
-        .bg-white h3 {
-            font-size: 1rem;
-        }
-
-        .bg-white p {
-            font-size: 1.2rem;
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
         }
 
         .logout-btn {
-            padding: 0.7rem;
-            font-size: 1rem;
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-    }
-</style>
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2.5rem;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-content h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .bg-white {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .bg-white:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .bg-white h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .bg-white p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .bg-white .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .bg-white .text-lg {
+            font-size: 1.2rem;
+        }
+
+        .shadow {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        /* Chart Section */
+        canvas {
+            width: 100%;
+            height: 300px;
+            margin-top: 2rem;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+                padding: 1.5rem;
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1.5rem;
+                box-sizing: border-box;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar a {
+                font-size: 1rem;
+            }
+
+            .bg-white {
+                padding: 1rem;
+            }
+
+            .bg-white h3 {
+                font-size: 1rem;
+            }
+
+            .bg-white p {
+                font-size: 1.2rem;
+            }
+
+            .logout-btn {
+                padding: 0.7rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
 
 </head>
 
@@ -215,14 +215,23 @@
         <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-lg">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Election Voting</h2>
 
+            <!-- Election Selection -->
+            <div id="election-selection" class="bg-white p-6 shadow rounded">
+                <h2 class="text-xl font-bold mb-4">Select an Election</h2>
+                <select id="election-select" class="w-full p-3 border border-gray-300 rounded-lg text-lg">
+                    <option value="" selected disabled>Choose an election to vote in</option>
+                </select>
+                <p id="election-description" class="mt-2 text-gray-600 italic"></p>
+            </div>
+
             <!-- Countdown Section -->
-            <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded">
+            <div id="countdown-section" class="bg-white p-6 mt-6 shadow rounded hidden">
                 <h2 class="text-xl font-bold">Time Remaining</h2>
                 <p id="countdown" class="text-4xl font-bold text-center">Loading...</p>
             </div>
 
             <!-- Vote Form -->
-            <div id="vote-section" class="bg-white p-6 mt-6 shadow rounded">
+            <div id="vote-section" class="bg-white p-6 mt-6 shadow rounded hidden">
                 <h2 class="text-2xl font-bold mb-6 text-center text-blue-700">Vote for Your Candidate</h2>
                 <div id="candidateList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <!-- Candidates will be populated here -->
@@ -232,146 +241,322 @@
                     disabled>Submit Vote</button>
             </div>
 
+            <!-- Completed Elections -->
+            <div id="completed-elections" class="bg-white p-6 mt-6 shadow rounded">
+                <h2 class="text-xl font-bold mb-4">Your Voting History</h2>
+                <div id="voting-history-list" class="divide-y divide-gray-200">
+                    <!-- History will be populated here -->
+                    <p class="text-gray-500 py-2">Loading your voting history...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const voterID = localStorage.getItem("userID");
-        
+        // This script fixes the candidate loading issue
+            const voterID = localStorage.getItem("userID");
+            let currentElectionID = null;
 
-        if (!voterID) {
-            alert("Voter ID not found. Please log in again.");
-            window.location.href = "/login"; // redirect if voter ID is missing
-        }
+            if (!voterID) {
+                alert("Voter ID not found. Please log in again.");
+                window.location.href = "/login"; // redirect if voter ID is missing
+            }
 
-        // Load candidates from API
-        async function loadCandidates() {
-            try {
-                const res = await fetch("/api/candidates");
-                const candidates = await res.json();
-                const list = document.getElementById("candidateList");
+            // Load available elections the user can vote in
+            async function loadAvailableElections() {
+                try {
+                    const res = await fetch(`/api/vote/available-elections?voterID=${voterID}`);
+                    const elections = await res.json();
+                    const selectEl = document.getElementById("election-select");
 
-                list.innerHTML = candidates.map(c => `
-    <label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
-        <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
-        <div class="flex flex-col items-center text-center gap-4">
-            <img src="${c.photo}" alt="${c.name}" class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
-            <div>
-                <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
-                <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
-                <p class="text-sm text-gray-600 italic">"${c.promises}"</p>
-            </div>
+                    // Clear any existing options except the default
+                    selectEl.innerHTML = '<option value="" selected disabled>Choose an election to vote in</option>';
+
+                    if (elections.length === 0) {
+                        selectEl.innerHTML += `<option value="" disabled>No available elections to vote in</option>`;
+                        document.getElementById("election-description").textContent = "You have voted in all current elections or there are no active elections at this time.";
+                        return;
+                    }
+
+                    elections.forEach(election => {
+                        // Make sure we're using the correct property names from the election_times table
+                        selectEl.innerHTML += `<option value="${election.id}">${election.name}</option>`;
+                    });
+
+                    document.getElementById("election-description").textContent = "Select an election to continue voting.";
+
+                    // Add event listener
+                    selectEl.addEventListener("change", electionSelected);
+                } catch (err) {
+                    console.error("Failed to load available elections", err);
+                    document.getElementById("election-description").textContent = "Error loading elections. Please try again later.";
+                }
+            }
+
+            // When user selects an election
+            async function electionSelected(e) {
+                const electionID = e.target.value;
+                currentElectionID = electionID;
+
+                if (!electionID) return;
+
+                // Update description
+                document.getElementById("election-description").textContent = "Loading election details...";
+
+                try {
+                    // Load election time info
+                    await fetchElectionTime(electionID);
+
+                    // Load candidates - FIXED HERE: using electionID parameter
+                    await loadCandidates(electionID);
+
+                    // Show voting section
+                    document.getElementById("countdown-section").classList.remove("hidden");
+                    document.getElementById("vote-section").classList.remove("hidden");
+
+                    document.getElementById("election-description").textContent = `Election #${electionID} selected. Please choose your candidate below.`;
+                } catch (err) {
+                    console.error("Error loading election details", err);
+                    document.getElementById("election-description").textContent = "Error loading election details. Please try again.";
+                }
+            }
+
+            // Load candidates for selected election - FIXED FUNCTION
+            async function loadCandidates(electionID) {
+                try {
+                    // FIXED URL: Using correct API path based on router configuration
+                    const res = await fetch(`/api/vote/candidates/${electionID}`);
+
+                    // Log the request details for debugging
+                    console.log(`Fetching candidates from: /api/vote/candidates/${electionID}`);
+
+                    const candidates = await res.json();
+
+                    // Log the response
+                    console.log("API Response:", candidates);
+                    const list = document.getElementById("candidateList");
+
+                    // For debugging
+                    console.log(`Fetched ${candidates.length} candidates for election ID ${electionID}`);
+
+                    if (candidates.length === 0) {
+                        list.innerHTML = '<p class="col-span-full text-center text-gray-500 py-6">No candidates found for this election.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = candidates.map(c => `
+<label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
+    <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
+    <div class="flex flex-col items-center text-center gap-4">
+        <img src="${c.photo || '/images/default-candidate.png'}" alt="${c.name}" 
+             onerror="this.onerror=null; this.src='/images/default-candidate.png';" 
+             class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
+            <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
+            <p class="text-sm text-gray-600 italic">"${c.promises || 'No promises provided'}"</p>
         </div>
-        <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
-            <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-            </svg>
-        </div>
-    </label>
+    </div>
+    <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+</label>
 `).join('');
 
-
-                document.querySelectorAll('input[name="candidate"]').forEach(input => {
-                    input.addEventListener('change', () => {
-                        document.getElementById("vote-btn").disabled = false;
+                    document.querySelectorAll('input[name="candidate"]').forEach(input => {
+                        input.addEventListener('change', () => {
+                            document.getElementById("vote-btn").disabled = false;
+                        });
                     });
-                });
-            } catch (err) {
-                console.error("Failed to load candidates", err);
-                alert("Failed to load candidates, please try again later.");
+                } catch (err) {
+                    console.error("Failed to load candidates", err);
+
+                    // Try an alternative API endpoint format as fallback
+                    try {
+                        console.log("Trying fallback endpoint with query parameter");
+                        const fallbackRes = await fetch(`/api/vote/candidates?electionID=${electionID}`);
+                        const fallbackCandidates = await fallbackRes.json();
+
+                        console.log("Fallback endpoint response:", fallbackCandidates);
+
+                        const list = document.getElementById("candidateList");
+
+                        if (fallbackCandidates.length === 0) {
+                            list.innerHTML = '<p class="col-span-full text-center text-gray-500 py-6">No candidates found for this election.</p>';
+                            return;
+                        }
+
+                        // Render candidates from fallback response
+                        list.innerHTML = fallbackCandidates.map(c => `
+<label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
+    <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
+    <div class="flex flex-col items-center text-center gap-4">
+        <img src="${c.photo || '/images/default-candidate.png'}" alt="${c.name}" 
+             onerror="this.onerror=null; this.src='/images/default-candidate.png';" 
+             class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
+            <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
+            <p class="text-sm text-gray-600 italic">"${c.promises || 'No promises provided'}"</p>
+        </div>
+    </div>
+    <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+</label>
+`).join('');
+
+                        document.querySelectorAll('input[name="candidate"]').forEach(input => {
+                            input.addEventListener('change', () => {
+                                document.getElementById("vote-btn").disabled = false;
+                            });
+                        });
+
+                        return; // Exit if fallback worked
+
+                    } catch (fallbackErr) {
+                        console.error("Fallback endpoint also failed:", fallbackErr);
+                        document.getElementById("candidateList").innerHTML =
+                            '<p class="col-span-full text-center text-red-500 py-6">Failed to load candidates. Please try again later.</p>';
+                    }
+                }
             }
-        }
 
-        // Cast vote
-        document.getElementById("vote-btn").addEventListener("click", async () => {
-            const selected = document.querySelector('input[name="candidate"]:checked');
-            if (!selected) return alert("Please select a candidate");
+            // Cast vote
+            document.getElementById("vote-btn").addEventListener("click", async () => {
+                const selected = document.querySelector('input[name="candidate"]:checked');
+                if (!selected) return alert("Please select a candidate");
+                if (!currentElectionID) return alert("Please select an election");
 
-            const currentTime = new Date();
-            const startTime = new Date(localStorage.getItem("election_start_time"));
-            const endTime = new Date(localStorage.getItem("election_end_time"));
+                try {
+                    const res = await fetch("/api/vote/cast-vote", {
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            voterID,
+                            candidateID: selected.value,
+                            electionID: currentElectionID
+                        })
+                    });
 
-            if (currentTime < startTime || currentTime > endTime) {
-                return alert("Voting is only allowed during the election period.");
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        alert(data.message || "Something went wrong.");
+                        return;
+                    }
+
+                    alert(data.message || "Vote submitted successfully!");
+                    document.getElementById("vote-btn").disabled = true;
+
+                    // Update UI after successful vote
+                    document.getElementById("countdown-section").classList.add("hidden");
+                    document.getElementById("vote-section").classList.add("hidden");
+
+                    // Refresh available elections and voting history
+                    loadAvailableElections();
+                    loadVotingHistory();
+
+                    // Reset selection
+                    document.getElementById("election-select").value = "";
+                    document.getElementById("election-description").textContent = "Select another election to continue voting.";
+                } catch (err) {
+                    console.error("Vote submission failed", err);
+                    alert("Something went wrong while submitting your vote.");
+                }
+            });
+
+            // Load user's voting history
+            async function loadVotingHistory() {
+                try {
+                    const res = await fetch(`/api/vote/voter-history?voterID=${voterID}`);
+                    const history = await res.json();
+                    const historyEl = document.getElementById("voting-history-list");
+
+                    if (history.length === 0) {
+                        historyEl.innerHTML = `<p class="text-gray-500 py-4">You haven't voted in any elections yet.</p>`;
+                        return;
+                    }
+
+                    historyEl.innerHTML = history.map(vote => `
+            <div class="py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-medium text-gray-900">${vote.title || 'Election ' + vote.electionID}</h3>
+                        <p class="text-sm text-gray-500">Voted on: ${new Date(vote.vote_time).toLocaleString()}</p>
+                    </div>
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Completed</span>
+                </div>
+            </div>
+        `).join('');
+                } catch (err) {
+                    console.error("Failed to load voting history", err);
+                    document.getElementById("voting-history-list").innerHTML =
+                        `<p class="text-red-500 py-4">Failed to load voting history. Please try again later.</p>`;
+                }
             }
 
-            try {
-                const res = await fetch("/api/vote/cast-vote", {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ voterID, candidateID: selected.value })
-                });
+            // Fetch and store election time for the selected election
+            async function fetchElectionTime(electionID) {
+                try {
+                    const res = await fetch(`/api/vote/election-time?electionID=${electionID}`);
+                    const { start_time, end_time } = await res.json();
 
-                const data = await res.json();
+                    // Store election times
+                    localStorage.setItem(`election_${electionID}_start_time`, start_time);
+                    localStorage.setItem(`election_${electionID}_end_time`, end_time);
 
-                if (!res.ok) {
-                    alert(data.message || "Something went wrong.");
-                    return;
+                    updateCountdown(start_time, end_time);
+                } catch (err) {
+                    console.error("Failed to fetch election time", err);
+                }
+            }
+
+            // Update countdown for the current election
+            function updateCountdown(startTime, endTime) {
+                const start = new Date(startTime);
+                const end = new Date(endTime);
+                const countdownEl = document.getElementById("countdown");
+
+                if (!countdownEl) return;
+
+                function updateTimer() {
+                    const now = new Date();
+                    let diff = end - now;
+
+                    if (now < start) {
+                        countdownEl.innerText = "Election hasn't started yet.";
+                        return;
+                    }
+
+                    if (diff <= 0) {
+                        countdownEl.innerText = "Election has ended.";
+                        return;
+                    }
+
+                    const hours = Math.floor(diff / 1000 / 60 / 60);
+                    const minutes = Math.floor((diff / 1000 / 60) % 60);
+                    const seconds = Math.floor((diff / 1000) % 60);
+
+                    countdownEl.innerText = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
                 }
 
-                alert(data.message || "Vote submitted successfully!");
-                document.getElementById("vote-btn").disabled = true;
-            } catch (err) {
-                console.error("Vote submission failed", err);
-                alert("Something went wrong while submitting your vote.");
-            }
-        });
-
-        // Countdown Display
-        function loadCountdownFromLocalStorage() {
-            const startTime = new Date(localStorage.getItem("election_start_time"));
-            const endTime = new Date(localStorage.getItem("election_end_time"));
-
-            const countdownEl = document.getElementById("countdown");
-            if (!countdownEl) return;
-
-            function updateCountdown() {
-                const now = new Date();
-                let diff = endTime - now;
-
-                if (now < startTime) {
-                    countdownEl.innerText = "Election hasn't started yet.";
-                    return;
+                updateTimer();
+                // Clear existing interval if any
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
                 }
-
-                if (diff <= 0) {
-                    countdownEl.innerText = "Election has ended.";
-                    return;
-                }
-
-                const hours = Math.floor(diff / 1000 / 60 / 60);
-                const minutes = Math.floor((diff / 1000 / 60) % 60);
-                const seconds = Math.floor((diff / 1000) % 60);
-
-                countdownEl.innerText = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
+                window.countdownInterval = setInterval(updateTimer, 1000);
             }
 
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
-        }
-
-        // Fetch election time from API once and store in localStorage
-        async function fetchElectionTimeOnce() {
-            try {
-                const res = await fetch("/api/vote/election-time");
-                const { start_time, end_time } = await res.json();
-
-                localStorage.setItem("election_start_time", start_time);
-                localStorage.setItem("election_end_time", end_time);
-
-                loadCountdownFromLocalStorage();
-            } catch (err) {
-                console.error("Failed to fetch election time", err);
-            }
-        }
-
-        // Initial load
-        loadCandidates();
-        fetchElectionTimeOnce();
+            // Initial load
+            loadAvailableElections();
+            loadVotingHistory();
     </script>
-
-
-
 </body>
 
 </html>

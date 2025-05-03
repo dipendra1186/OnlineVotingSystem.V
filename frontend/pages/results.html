@@ -146,6 +146,7 @@
 
         <div class="bg-white p-6 mt-6 shadow rounded">
             <h2 class="text-xl font-bold">Live Vote Count</h2>
+            <div id="status">⌛ Waiting for results...</div>
             <canvas id="voteChart"></canvas>
         </div>
 
@@ -153,18 +154,12 @@
             <h3 class="text-lg font-semibold">Summary</h3>
             <div id="resultsSummary" class="mt-4"></div>
         </div>
-
-        <div class="mt-6 text-center">
-            <a href="/dashboard" class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-700">Back to
-                Dashboard</a>
-        </div>
     </div>
 
     <div id="celebration-banner" class="celebration-banner">
         🎉 The Election has Ended! 🎉
     </div>
 
-    <div id="status">⌛ Waiting for results...</div>
     <div id="results"></div>
     
     <script>

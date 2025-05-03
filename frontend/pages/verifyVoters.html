@@ -228,6 +228,7 @@
             <p><strong>Age:</strong> ${voter.age}</p>
             <p><strong>Gender:</strong> ${voter.gender}</p>
             <button onclick="verifyVoter('${voter.voterID}')" class="verify-btn">✅ Verify</button>
+            <button onclick="rejectVoter('${voter.voterID}')" class="verify-btn" style="background-color: #ef4444; margin-left: 1rem;">❌ Reject</button>
           </div>
           <img src="${voter.photo}" alt="Voter Photo" class="voter-photo" />
         `;
@@ -235,6 +236,20 @@
                 listDiv.appendChild(card);
             });
         }
+
+        async function rejectVoter(voterID) {
+                const confirmReject = confirm("Are you sure you want to reject this voter?");
+                if (!confirmReject) return;
+
+                const res = await fetch(`http://localhost:3000/api/verify-voters/reject/${voterID}`, {
+                    method: 'PUT'
+                });
+
+                const data = await res.json();
+                alert(data.message);
+                fetchPendingVoters(); // Refresh list
+            }
+
 
         async function verifyVoter(voterID) {
             const res = await fetch(`http://localhost:3000/api/verify-voters/verify/${voterID}`, {
