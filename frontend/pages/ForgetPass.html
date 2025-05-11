@@ -71,6 +71,11 @@
             background-color: #0056b3;
         }
 
+        .forgot-password-panel button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
         .forgot-password-panel .back-to-login {
             font-size: 20px;
             margin-top: 20px;
@@ -85,6 +90,52 @@
         .forgot-password-panel .back-to-login a:hover {
             text-decoration: underline;
         }
+
+        .id-examples {
+            font-size: 14px;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .status-message {
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
     <script src="/backend/controllers/navigation.js"></script>
 </head>
@@ -93,12 +144,20 @@
     <div class="forgot-password-container">
         <div class="forgot-password-panel">
             <h2>Forgot Your Password?</h2>
-            <p>Please enter your ID to receive a password reset token.</p>
-            <form onsubmit="handleForgotPassword(event)">
+            <p>Please enter your ID to receive a password reset token via email.</p>
+            <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
                 <label for="ID">Your ID</label>
-                <input type="text" id="ID" name="ID" placeholder="Enter your ID (e.g., A......., V....... or nid)" required>
+                <input type="text" id="ID" name="ID" placeholder="Enter your ID" required>
+                <div class="id-examples">
+                    Examples: V2025BT5821 (Voter ID), A2025AD123 (Admin ID), or 123456789 (NID)
+                </div>
 
-                <button type="submit">Send Reset Token</button>
+                <button type="submit" id="submitBtn">
+                    Send Reset Token
+                    <span class="loader" id="btnLoader"></span>
+                </button>
+
+                <div id="statusMessage" class="status-message"></div>
             </form>
             <p class="back-to-login">
                 <a href="/login">Back to Login</a>
@@ -110,24 +169,31 @@
         async function handleForgotPassword(event) {
             event.preventDefault();
 
-            
-
-            // Get the input value - using the correct ID
+            // Get form elements
+            const form = document.getElementById('forgotPasswordForm');
             const ID = document.getElementById('ID').value.trim();
-            const submitButton = event.target.querySelector('button');
-            submitButton.disabled = true; // Disable button to prevent multiple submissions
+            const submitBtn = document.getElementById('submitBtn');
+            const btnLoader = document.getElementById('btnLoader');
+            const statusMessage = document.getElementById('statusMessage');
 
+            // Clear previous messages
+            statusMessage.className = 'status-message';
+            statusMessage.textContent = '';
+            statusMessage.style.display = 'none';
+
+            // Validate input
             if (!ID) {
-                alert('Please enter your ID.');
-                submitButton.disabled = false;
+                showError('Please enter your ID.');
                 return;
             }
 
-            try {
-                // Show loading state to give user feedback
-                submitButton.textContent = "Sending...";
+            // Disable form and show loading state
+            submitBtn.disabled = true;
+            btnLoader.style.display = 'inline-block';
+            submitBtn.textContent = 'Sending ';
 
-                const response = await fetch('http://localhost:3000/api/forgot-password', {
+            try {
+                const response = await fetch('/api/forgot-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ID })
@@ -136,24 +202,47 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    sessionStorage.setItem('resetID', ID); // Store ID only on success
-                    alert('Password reset token has been sent to your email. Please check your inbox.');
-                    // Optional: redirect to login page or show a success message
-                    // window.location.href = 'login.html';
+                    // Store ID for potential use on next screen
+                    sessionStorage.setItem('resetID', ID);
+
+                    // Show success message
+                    showSuccess('Password reset token has been sent to your email. Please check your inbox.');
+
+                    // Optional: Clear the form
+                    form.reset();
+
+                    // Optional: Redirect after a delay
+                    // setTimeout(() => {
+                    //     window.location.href = '/login';
+                    // }, 3000);
                 } else {
-                    alert(data.message || 'An error occurred. Please try again.');
+                    showError(data.message || 'An error occurred. Please try again.');
                 }
             } catch (error) {
-                alert('Error: Unable to connect to the server. Please try again.');
                 console.error('Error:', error);
+                showError('Unable to connect to the server. Please try again later.');
             } finally {
                 // Reset button state
-                submitButton.disabled = false;
-                submitButton.textContent = "Send Reset Token";
+                submitBtn.disabled = false;
+                btnLoader.style.display = 'none';
+                submitBtn.textContent = 'Send Reset Token';
             }
         }
-    </script>
 
+        function showSuccess(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message success';
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+        }
+
+        function showError(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message error';
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+        }
+    </script>
 </body>
 
 </html>

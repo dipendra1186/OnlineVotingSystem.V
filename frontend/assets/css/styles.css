@@ -4,12 +4,13 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    
 }
 
 /* Body and Layout */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #f4f4f4;
+    background: linear-gradient(135deg, #ce1126, #ffffff 40%, #003893);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -125,7 +126,7 @@ h2 {
 .text-center {
     text-align: center;
     margin-top: 16px;
-    font-size: 14px;
+    font-size: 18px;
 }
 
 .text-center a {

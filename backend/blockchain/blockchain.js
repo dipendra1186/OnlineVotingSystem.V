@@ -69,7 +69,6 @@ class Blockchain {
 
         try {
             await db.execute(query, [index, timestamp, JSON.stringify(data), previousHash, hash]);
-            console.log(`Block ${index} saved to the database.`);
         } catch (err) {
             console.error("Error saving block to database:", err);
         }

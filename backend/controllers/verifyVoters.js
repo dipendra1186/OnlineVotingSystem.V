@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const nodemailer = require('nodemailer');
 
+
 // GET: Fetch voters pending verification
 exports.getPendingVoters = async (req, res) => {
     try {

@@ -1,5 +1,6 @@
 const db = require('../config/db'); // your promise-based MySQL pool
 
+
 exports.getAllNotices = async (req, res) => {
   try {
     const [notices] = await db.query('SELECT * FROM notifications ORDER BY created_at DESC');

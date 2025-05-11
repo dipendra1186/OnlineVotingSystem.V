@@ -2,6 +2,7 @@ require("dotenv").config();
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 
+
 // Database connection
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -33,9 +34,9 @@ const loginCustomer = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid Voter ID format. Must start with 'A' or 'V'." });
         }
 
-        // Fetch user details from database
+        // Fetch user details and status from the database
         const [rows] = await db.execute(
-            `SELECT ${idColumn} AS userID, password, fullName, email FROM ${table} WHERE ${idColumn} = ?`,
+            `SELECT ${idColumn} AS userID, password, fullName, email, status FROM ${table} WHERE ${idColumn} = ?`,
             [voterID]
         );
 
@@ -45,7 +46,7 @@ const loginCustomer = async (req, res) => {
         }
 
         const user = rows[0];
-
+        console.log("Fetched user data:", user); // Debug log
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
@@ -62,6 +63,7 @@ const loginCustomer = async (req, res) => {
                 name: user.fullName,
                 email: user.email,
                 role: firstLetter === "A" ? "Admin" : "Voter",
+                status: user.status, // Ensure status is returned
             },
         });
     } catch (error) {

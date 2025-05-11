@@ -144,10 +144,18 @@
     <div class="main-content">
         <h1 class="text-2xl font-bold">Election Results</h1>
 
+        <!-- Dropdown to select ended election -->
+        <div class="mt-4">
+            <label for="electionSelect" class="block mb-2 font-medium">Select Ended Election:</label>
+            <select id="electionSelect" class="w-full p-2 border rounded">
+                <option value="">Choose an election</option>
+            </select>
+        </div>
+
         <div class="bg-white p-6 mt-6 shadow rounded">
-            <h2 class="text-xl font-bold">Live Vote Count</h2>
-            <div id="status">⌛ Waiting for results...</div>
-            <canvas id="voteChart"></canvas>
+            <h2 class="text-xl font-bold">Vote Count</h2>
+            <div id="status">⌛ Please select an election to view results</div>
+            <canvas id="voteChart" class="mt-4" height="250"></canvas> <!-- Set medium height -->
         </div>
 
         <div class="bg-white p-6 mt-6 shadow rounded">
@@ -157,117 +165,114 @@
     </div>
 
     <div id="celebration-banner" class="celebration-banner">
-        🎉 The Election has Ended! 🎉
+        🎉 Showing Election Results! 🎉
     </div>
 
-    <div id="results"></div>
-    
     <script>
-        let voteChart;
+        const statusDiv = document.getElementById("status");
+        const celebrationBanner = document.getElementById("celebration-banner");
+        const electionSelect = document.getElementById('electionSelect');
+        const resultsSummaryDiv = document.getElementById("resultsSummary");
 
-        async function fetchResults() {
-            try {
-                const response = await fetch('/api/results');
-                const data = await response.json();
-
-                console.log("API response:", data);
-
-                if (response.status === 403) {
-                    document.getElementById('status').innerText = '🕒 Election is still ongoing...';
-                    return;
-                }
-
-                if (response.ok && data.electionStatus === 'ended') {
-                    document.getElementById('status').style.display = 'none';
-
-                    const resultsContainer = document.getElementById('results');
-                    const summaryContainer = document.getElementById('resultsSummary');
-                    const banner = document.getElementById('celebration-banner');
-
-                    resultsContainer.innerHTML = '';
-                    summaryContainer.innerHTML = '';
-
-                    let winner = data.candidates[0];
-
-                    data.candidates.forEach((candidate, index) => {
-                        const div = document.createElement('div');
-                        div.innerHTML = `<strong>${index + 1}. ${candidate.name}</strong> - ${candidate.vote_count} votes`;
-                        resultsContainer.appendChild(div);
-
-                        if (candidate.vote_count > winner.vote_count) {
-                            winner = candidate;
-                        }
-                    });
-
-                    // Update Chart
-                    const names = data.candidates.map(c => c.name);
-                    const votes = data.candidates.map(c => c.vote_count);
-                    updateChart(names, votes);
-
-                    // Show summary and winner
-                    summaryContainer.innerHTML = `
-                        <div class="winning-announcement">
-                            🏆 Winner: ${winner.name} with ${winner.vote_count} votes!
-                        </div>
-                    `;
-
-                    // Show celebration banner
-                    banner.style.display = 'block';
-
-                    clearInterval(pollingInterval); // Stop polling once election ends
-                } else {
-                    console.log("Election still ongoing or status not 'ended'");
-                }
-            } catch (error) {
-                console.error("❌ Error fetching results:", error);
-                document.getElementById('status').innerText = 'Error fetching results.';
-            }
-        }
-
-        function updateChart(labels, data) {
-            const ctx = document.getElementById('voteChart').getContext('2d');
-            if (voteChart) {
-                voteChart.data.labels = labels;
-                voteChart.data.datasets[0].data = data;
-                voteChart.update();
-            } else {
-                voteChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Vote Count',
-                            data: data,
-                            backgroundColor: '#3b82f6',
-                            borderRadius: 8,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
+        // Initialize chart
+        const ctx = document.getElementById('voteChart').getContext('2d');
+        const voteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Votes',
+                    data: [],
+                    backgroundColor: '#4CAF50',
+                    borderColor: '#388E3C',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        ticks: {
+                            // Set stepSize to ensure data is shown as whole numbers
+                            stepSize: 1,
+                            callback: function (value) {
+                                return Number.isInteger(value) ? value : ''; // Ensure integers only
                             }
                         }
                     }
-                });
+                }
+            }
+        });
+
+        // Load ended elections into the dropdown
+        async function loadEndedElections() {
+            try {
+                const response = await fetch('/api/ended-elections');
+                const elections = await response.json();
+                if (elections.length > 0) {
+                    elections.forEach(election => {
+                        const option = document.createElement('option');
+                        option.value = election.id;
+                        option.textContent = election.name;
+                        electionSelect.appendChild(option);
+                    });
+                } else {
+                    statusDiv.textContent = "No ended elections available.";
+                }
+            } catch (error) {
+                statusDiv.textContent = "Failed to load elections. Please try again later.";
+                console.error('Error fetching elections:', error);
             }
         }
 
-        const pollingInterval = setInterval(fetchResults, 2000); // Poll every 2 seconds
+        // Load results for the selected election
+        async function loadElectionResults(electionId) {
+            if (!electionId) {
+                statusDiv.textContent = "Please select an election.";
+                return;
+            }
+
+            statusDiv.textContent = "Loading results...";
+
+            try {
+                const response = await fetch(`/api/election-results?electionId=${electionId}`);
+                const data = await response.json();
+
+                if (data.message) {
+                    statusDiv.textContent = data.message;
+                    return;
+                }
+
+                statusDiv.textContent = `Election "${data.electionName}" ended with status: ${data.electionStatus}`;
+                celebrationBanner.style.display = "block";
+
+                // Update chart data
+                const candidates = data.candidates;
+                voteChart.data.labels = candidates.map(candidate => candidate.name);
+                voteChart.data.datasets[0].data = candidates.map(candidate => candidate.vote_count);
+                voteChart.update();
+
+                // Display results summary
+                resultsSummaryDiv.innerHTML = candidates.map(candidate => {
+                    return `<p><strong>${candidate.name}</strong>: ${candidate.vote_count} votes</p>`;
+                }).join('');
+            } catch (error) {
+                statusDiv.textContent = "Failed to load election results. Please try again later.";
+                console.error('Error fetching results:', error);
+            }
+        }
+
+        // Event listener for election selection
+        electionSelect.addEventListener('change', () => {
+            const electionId = electionSelect.value;
+            loadElectionResults(electionId);
+        });
+
+        // Load elections on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEndedElections();
+        });
     </script>
-
-
-
-
 </body>
 
 </html>

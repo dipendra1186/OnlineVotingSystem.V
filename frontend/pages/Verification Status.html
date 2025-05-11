@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Status - Election System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar li {
+            margin: 1rem 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #3b82f6;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            background-color: #ef4444;
+            border: none;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+        }
+
+        .status-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 3rem;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Vote - Election System</h2>
+        <ul>
+            <li><a href="/vDashboard">Dashboard</a></li>
+            <li><a href="/verification-status" class="active">Vote</a></li>
+            <li><a href="/notice">Notices</a></li>
+            <li><a href="/results">Results</a></li>
+            <li><a href="/help">Help & Support</a></li>
+        </ul>
+        <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Verification Status</h2>
+
+            <div id="status-container" class="bg-white p-6 shadow rounded">
+                <div id="status-icon" class="status-icon">
+                    <!-- Icon will be inserted by JS -->
+                </div>
+
+                <h2 id="status-title" class="text-2xl font-bold mb-4 text-center">Checking your status...</h2>
+                <p id="status-message" class="text-lg text-center text-gray-600 mb-8">
+                    Please wait while we check your verification status.
+                </p>
+
+                <div id="status-actions" class="flex flex-col items-center gap-4">
+                    <!-- Actions will be inserted by JS -->
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 shadow rounded">
+                <h3 class="text-xl font-bold mb-4">What does this mean?</h3>
+                <div id="status-explanation" class="text-gray-700">
+                    <!-- Explanation will be inserted by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const message = urlParams.get('message') || 'Your account requires verification before you can vote';
+
+            // Elements
+            const statusIcon = document.getElementById('status-icon');
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            const statusActions = document.getElementById('status-actions');
+            const statusExplanation = document.getElementById('status-explanation');
+
+            // Update UI based on status
+            if (status === 'Pending') {
+                statusIcon.className = 'status-icon status-pending';
+                statusIcon.innerHTML = '⏳';
+                statusTitle.textContent = 'Verification Pending';
+                statusMessage.textContent = message;
+                statusActions.innerHTML = `
+                    <p class="text-center text-gray-500 mb-4">Your verification is being processed by our team. This usually takes 24-48 hours.</p>
+                    <a href="/vDashboard" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+                        Return to Dashboard
+                    </a>
+                `;
+                statusExplanation.innerHTML = `
+                    <p class="mb-4">Your voter ID and details have been submitted and are currently under review by our verification team.</p>
+                    <p class="mb-4">During the verification process:</p>
+                    <ul class="list-disc pl-6 mb-4">
+                        <li>Your submitted documents are being checked for authenticity</li>
+                        <li>Your voter eligibility is being confirmed</li>
+                        <li>Any required background checks are being conducted</li>
+                    </ul>
+                    <p>You will receive a notification once your verification is complete. You can check this page anytime to see your current status.</p>
+                `;
+            } else if (status === 'Rejected') {
+                statusIcon.className = 'status-icon status-rejected';
+                statusIcon.innerHTML = '❌';
+                statusTitle.textContent = 'Verification Rejected';
+                statusMessage.textContent = message;
+                statusActions.innerHTML = `
+                    <a href="/help" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+                        Contact Support
+                    </a>
+                    <a href="/vDashboard" class="mt-2 text-blue-600 hover:text-blue-800 font-medium">
+                        Return to Dashboard
+                    </a>
+                `;
+                statusExplanation.innerHTML = `
+                    <p class="mb-4">Unfortunately, your verification was rejected. This could be due to:</p>
+                    <ul class="list-disc pl-6 mb-4">
+                        <li>Incomplete or unclear documentation</li>
+                        <li>Information mismatch in your submitted details</li>
+                        <li>Not meeting the eligibility criteria for voting</li>
+                        <li>Suspicious activity detected on your account</li>
+                    </ul>
+                    <p class="mb-4">If you believe this is a mistake, please contact our support team for assistance.</p>
+                    <p>Our team will help you understand the specific reason for rejection and guide you through any steps needed to resolve the issue.</p>
+                `;
+            } else {
+                statusIcon.className = 'status-icon bg-red-100 text-red-600';
+                statusIcon.innerHTML = '⚠️';
+                statusTitle.textContent = 'Verification Required';
+                statusMessage.textContent = message;
+                statusActions.innerHTML = `
+                    <a class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+                        Wait for Verification...
+                    </a>
+                    <a href="/vDashboard" class="mt-2 text-blue-600 hover:text-blue-800 font-medium">
+                        Return to Dashboard
+                    </a>
+                `;
+                statusExplanation.innerHTML = `
+                    <p class="mb-4">You need to complete the verification process before you can access the voting page.</p>
+                    <p class="mb-4">Verification ensures:</p>
+                    <ul class="list-disc pl-6 mb-4">
+                        <li>The security and integrity of the election</li>
+                        <li>Only eligible voters can cast votes</li>
+                        <li>Each voter can only vote once per election</li>
+                    </ul>
+                    <p>Please click the "Complete Verification" button above to start the verification process.</p>
+                `;
+            }
+
+            // Logout button functionality
+            document.getElementById('logout-btn').addEventListener('click', function () {
+                // Clear localStorage
+                localStorage.removeItem('userID');
+                localStorage.removeItem('userToken');
+
+                // Redirect to login page
+                window.location.href = '/login';
+            });
+        });
+    </script>
+</body>
+
+</html>

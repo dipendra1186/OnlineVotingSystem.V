@@ -1,5 +1,6 @@
 const db = require('../config/db'); // your promise pool
 
+
 // Get all notifications
 exports.getAllNotifications = async (req, res) => {
     try {

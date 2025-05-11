@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+
 // Database connection
 const db = mysql.createPool({
     host: process.env.DB_HOST,

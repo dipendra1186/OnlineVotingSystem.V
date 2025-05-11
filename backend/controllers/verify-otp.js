@@ -1,5 +1,6 @@
 const db = require('../config/db'); // Import the database connection
 
+
 const verifyOTP = async (req, res) => {
     try {
         console.log('Request Body:', req.body);

@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const db = require('../config/db');
 
+
 // Generate a secure reset token
 const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 
@@ -23,7 +24,7 @@ pass: 'gtfc mlza rgzr vlwx',
         },
     });
 
-    const resetLink = `http://localhost:3000/reset-password?token=${encodeURIComponent(token)}&ID=${encodeURIComponent(ID)}`;
+    const resetLink = `${process.env.BASE_URL}/reset-password?token=${encodeURIComponent(token)}&ID=${encodeURIComponent(ID)}`;
 
     const mailOptions = {
         from: process.env.EMAIL_USER,

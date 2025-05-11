@@ -246,7 +246,8 @@
             <li><a href="/verifyVoters">Verify Voters</a></li>
 
         </ul>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+
     </div>
 
     <div class="main-content flex-1 p-6">
@@ -297,7 +298,7 @@
         // Total voters (not dependent on election)
             async function fetchTotalVoters() {
                 try {
-                    const res = await fetch('http://localhost:3000/api/dashboard/totalVoters');
+                    const res = await fetch('/api/dashboard/totalVoters');
                     const data = await res.json();
                     document.getElementById('totalVoters').innerText = data.totalVoters || 0;
                 } catch (error) {
@@ -318,7 +319,7 @@
         // Load elections into dropdown
         async function fetchElections() {
             try {
-                const response = await fetch("http://localhost:3000/api/dashboard/allElections");
+                const response = await fetch("/api/dashboard/allElections");
                 const data = await response.json();
 
                 const selector = document.getElementById("electionSelector");
@@ -339,17 +340,17 @@
             async function updateDashboardForElection(electionId) {
                 try {
                     // Fetch Candidates
-                    const candidatesRes = await fetch(`http://localhost:3000/api/dashboard/candidates/${electionId}`);
+                    const candidatesRes = await fetch(`/api/dashboard/candidates/${electionId}`);
                     const candidates = await candidatesRes.json();
                     document.getElementById("totalCandidates").innerText = candidates.length;
 
                     // ✅ Fetch total votes using vote_count column from candidates table
-                    const totalVotesRes = await fetch(`http://localhost:3000/api/dashboard/totalVotesByElection/${electionId}`);
+                    const totalVotesRes = await fetch(`/api/dashboard/totalVotesByElection/${electionId}`);
                     const { totalVotes } = await totalVotesRes.json();
                     document.getElementById("votesCast").innerText = totalVotes || 0;
 
                     // ✅ Fetch liveVotes (for graph) only
-                    const response = await fetch(`http://localhost:3000/api/dashboard/elections/${electionId}/liveVotes`);
+                    const response = await fetch(`/api/dashboard/elections/${electionId}/liveVotes`);
 
                     const votes = await response.json();
 
@@ -362,7 +363,7 @@
         // Load election end time for countdown
         async function fetchElectionEndTime(electionId) {
             try {
-                const res = await fetch(`http://localhost:3000/api/dashboard/electionEndTime/${electionId}`);
+                const res = await fetch(`/api/dashboard/electionEndTime/${electionId}`);
                 const data = await res.json();
 
                 if (data && data.end_time) {
@@ -433,6 +434,33 @@
                     options: options
                 });
             }
+
+            function logout() {
+                    const confirmLogout = confirm("Are you sure you want to logout?");
+                    if (!confirmLogout) return;
+
+                    fetch('/api/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    }).finally(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+
+                        if (window.history && window.history.pushState) {
+                            window.history.pushState(null, "", window.location.href);
+                            window.onpopstate = function () {
+                                window.history.pushState(null, "", window.location.href);
+                            };
+                        }
+
+                        window.location.href = "/login";
+                    });
+                }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('logoutBtn').addEventListener('click', logout);
+                });
 
     </script>
 

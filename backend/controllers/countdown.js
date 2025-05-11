@@ -1,6 +1,7 @@
 // controllers/countdown.js
 const pool = require("../config/db.js");
 
+
 // Set election start and end time
 const setElectionTime = async (req, res) => {
     try {

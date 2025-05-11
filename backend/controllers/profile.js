@@ -1,5 +1,6 @@
 const db = require('../config/db');
 
+
 const maskEmail = (email) => {
     if (!email) return '';
     const [local, domain] = email.split('@');

@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
 
+
 const resetPassword = async (req, res) => {
     const { token, ID, password, confirmPassword } = req.body;
 

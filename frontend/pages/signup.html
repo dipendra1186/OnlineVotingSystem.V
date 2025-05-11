@@ -15,7 +15,7 @@
             <div class="form-group">
                 <label for="role">Role</label>
                 <select id="role" required>
-                    <option value="voter">Voter</option> 
+                    <option value="voter">Voter</option>
                 </select>
             </div>
             <div class="form-group">
@@ -117,7 +117,7 @@
                 nid: nid,
                 password: password,
                 photo: photoUrl
-            };resizeBy
+            }; resizeBy
 
             try {
                 const response = await fetch('http://localhost:3000/api/signup', {
@@ -133,7 +133,7 @@
                     localStorage.setItem('userEmail', userData.email);
                     localStorage.setItem('role', data.role);
                     alert("OTP Sent to your email address");
-                    window.location.href = './otp';
+                    window.location.href = './vDashboard';
                 } else {
                     alert(data.message);
                 }
@@ -144,4 +144,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -133,7 +133,7 @@
             console.log("🔄 Sending verification request:", { userID, email, otp: otpValue });
 
             try {
-                const response = await fetch('http://localhost:3000/api/verify-otp', {
+                const response = await fetch('/api/verify-otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userID, email, otp: otpValue })
@@ -178,7 +178,7 @@
             console.log("🔄 Resending OTP request:", { userID, email });
 
             try {
-                const response = await fetch('http://localhost:3000/api/resend-otp', {
+                const response = await fetch('/api/resend-otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userID, email })

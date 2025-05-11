@@ -1,5 +1,6 @@
 const db = require("../config/db"); // Import your DB connection pool only once
 
+
 // ✅ Create a new candidate with election_id
 exports.createCandidate = async (req, res) => {
     try {

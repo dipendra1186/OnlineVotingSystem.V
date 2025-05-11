@@ -1,5 +1,6 @@
 const db = require("../config/db");
 
+
 // Fetch total voters count
 exports.gettotalVoters = async (req, res) => {
     try {

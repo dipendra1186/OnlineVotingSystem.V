@@ -217,7 +217,7 @@
 
             try {
                 updateDebug("Attempting to fetch profile data...");
-                const apiUrl = `http://localhost:3000/api/user/profile?id=${userID}`;
+                const apiUrl = `/api/user/profile?id=${userID}`;
                 updateDebug(`Fetching from: ${apiUrl}`);
 
                 const response = await fetch(apiUrl);

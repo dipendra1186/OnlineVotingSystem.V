@@ -308,7 +308,7 @@
 
         async function fetchElections() {
             try {
-                const response = await fetch("http://localhost:3000/api/election_times");
+                const response = await fetch("/api/election_times");
                 elections = await response.json();
 
                 const selector = document.getElementById("electionSelector");
@@ -361,7 +361,7 @@
             }
 
             try {
-                const response = await fetch("http://localhost:3000/api/election_times", {
+                const response = await fetch("/api/election_times", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -444,7 +444,7 @@
                     candidateData.photo = imageUrl;
                 }
 
-                let url = "http://localhost:3000/api/candidates";
+                let url = "/api/candidates";
                 let method = "POST";
 
                 if (editMode) {
@@ -493,7 +493,7 @@
 
             try {
                 // Fetch candidates filtered by election_id
-                const res = await fetch(`http://localhost:3000/api/candidates?election_id=${currentElectionId}`);
+                const res = await fetch(`/api/candidates?election_id=${currentElectionId}`);
                 const candidates = await res.json();
                 const candidateList = document.getElementById("candidateList");
                 candidateList.innerHTML = "";
@@ -551,7 +551,7 @@
         async function deleteCandidate(id) {
             if (!confirm("Are you sure you want to delete this candidate?")) return;
             try {
-                const res = await fetch(`http://localhost:3000/api/candidates/${id}`, {
+                const res = await fetch(`/api/candidates/${id}`, {
                     method: "DELETE"
                 });
                 if (!res.ok) throw new Error("Failed to delete candidate.");

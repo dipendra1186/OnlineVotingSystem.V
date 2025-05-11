@@ -430,7 +430,7 @@
     <div class="main-content flex-1 p-6">
         <h1 class="text-2xl font-bold mb-6">Notices</h1>
 
-        <ul id="notice-list" class="space-y-4">
+        <ul id="notice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Notices will be dynamically inserted here -->
         </ul>
 
@@ -447,33 +447,71 @@
 
                 if (response.ok) {
                     if (data.length === 0) {
-                        noticeList.innerHTML = '<li class="text-center text-gray-500">No notices found.</li>';
+                        noticeList.innerHTML = '<li class="col-span-full text-center text-gray-500">No notices found.</li>';
                     } else {
-                        // Clear any existing content
                         noticeList.innerHTML = '';
 
-                        data.forEach(notice => {
+                        data.forEach((notice, index) => {
                             const li = document.createElement('li');
-                            li.className = 'bg-white p-4 rounded shadow-md mb-4';
+                            li.className = 'bg-white p-6 rounded-xl shadow-lg relative transition-all duration-300 hover:shadow-2xl';
+
+                            const truncated = notice.message.length > 120
+                                ? notice.message.substring(0, 120) + '...'
+                                : notice.message;
+
+                            const fullId = `full-message-${index}`;
+                            const isTruncated = notice.message.length > 120;
 
                             li.innerHTML = `
-                                <h2 class="text-lg font-semibold mb-2">${notice.title}</h2>
-                                <p class="text-gray-700 mb-2">${notice.message}</p>
-                                <time class="text-sm text-gray-500">${new Date(notice.created_at).toLocaleString()}</time>
-                            `;
+                                    <div class="flex items-start space-x-4">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-blue-100 text-blue-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                          d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-1">${notice.title}</h3>
+                                            <p class="text-gray-600" id="${fullId}">${truncated}</p>
+                                            ${isTruncated
+                                    ? `<button onclick="toggleMessage('${fullId}', ${index})"
+                                                           class="text-blue-600 mt-2 text-sm hover:underline">
+                                                    Read more
+                                                   </button>`
+                                    : ''
+                                }
+                                            <time class="block text-xs text-gray-400 mt-2">${new Date(notice.created_at).toLocaleString()}</time>
+                                        </div>
+                                    </div>
+                                `;
 
                             noticeList.appendChild(li);
                         });
                     }
                 } else {
-                    noticeList.innerHTML = '<li class="text-center text-red-500">Failed to load notices.</li>';
+                    noticeList.innerHTML = '<li class="text-center text-red-500 col-span-full">Failed to load notices.</li>';
                 }
             } catch (error) {
                 console.error('Error fetching notices:', error);
-                noticeList.innerHTML = '<li class="text-center text-red-500">Error fetching notices.</li>';
+                noticeList.innerHTML = '<li class="text-center text-red-500 col-span-full">Error fetching notices.</li>';
             }
         });
+
+        function toggleMessage(id, index) {
+            const el = document.getElementById(id);
+            const current = el.innerText;
+            const original = window.noticeData[index].message;
+
+            if (current.endsWith('...')) {
+                el.innerText = original;
+            } else {
+                el.innerText = original.substring(0, 120) + '...';
+            }
+        }
     </script>
+    
 
 </body>
 

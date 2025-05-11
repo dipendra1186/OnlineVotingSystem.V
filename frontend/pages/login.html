@@ -163,11 +163,16 @@
             };
 
             try {
-                const response = await fetch('http://localhost:3000/api/login', {
+                const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
+
+                // Check if the response is OK (status code 200)
+                if (!response.ok) {
+                    throw new Error('Login failed: ' + response.statusText);
+                }
 
                 const data = await response.json();
 
@@ -176,9 +181,13 @@
                     console.log("User object:", data.user);
                     console.log("UserID to store:", data.user.userID || data.userID || "not found");
 
-                    // Store data in localStorage
+                    // Store data in localStorage (ensure only non-sensitive data is stored)
                     localStorage.setItem('userID', data.user.userID);
                     localStorage.setItem('role', data.user.role);
+                    localStorage.setItem('status', data.user.status); // Store status as well
+
+                    // You can also log the status if you want to show custom messages
+                    console.log('User status:', data.user.status);
 
                     // Redirect based on role
                     const role = data.user.role.toLowerCase();
@@ -198,6 +207,9 @@
             }
         }
     </script>
+    
+    
+    
 
 
 </body>
