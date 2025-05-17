@@ -157,42 +157,6 @@ async function sendRejectionEmail(email, fullName) {
     }
 }
 
-exports.rejectVoter = async (req, res) => {
-    const voterID = req.params.voterID;
 
-    try {
-        const [result] = await pool.query(
-            `UPDATE voters 
-             SET status = 'Rejected', isVerified = 0, rejected_at = NOW() 
-             WHERE voterID = ?`,
-            [voterID]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ success: false, message: "Voter not found" });
-        }
-
-        const [voterInfo] = await pool.query('SELECT email, fullName FROM voters WHERE voterID = ?', [voterID]);
-
-        if (!voterInfo.length) {
-            return res.status(404).json({ success: false, message: "Email info not found" });
-        }
-
-        let email = voterInfo[0].email;
-        const fullName = voterInfo[0].fullName;
-
-        if (email) email = email.split('-')[0];
-
-        if (email && fullName) {
-            await sendRejectionEmail(email, fullName);
-        }
-
-        res.json({ success: true, message: `Voter ${voterID} rejected and will be auto-deleted after 10 minutes.` });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Rejection failed", error: err });
-    }
-};
 
 

@@ -2,7 +2,6 @@ require("dotenv").config();
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 
-
 // Database connection
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -34,11 +33,15 @@ const loginCustomer = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid Voter ID format. Must start with 'A' or 'V'." });
         }
 
-        // Fetch user details and status from the database
-        const [rows] = await db.execute(
-            `SELECT ${idColumn} AS userID, password, fullName, email, status FROM ${table} WHERE ${idColumn} = ?`,
-            [voterID]
-        );
+        // Build the SELECT query based on the table
+        let query = `SELECT ${idColumn} AS userID, password, fullName, email`;
+        if (table === "voters") {
+            query += `, status`; // Only add status for voters
+        }
+        query += ` FROM ${table} WHERE ${idColumn} = ?`;
+
+        // Execute the query
+        const [rows] = await db.execute(query, [voterID]);
 
         // If no user found, return error
         if (rows.length === 0) {
@@ -55,16 +58,21 @@ const loginCustomer = async (req, res) => {
         }
 
         // Successful login response
+        const userData = {
+            userID: user.userID,
+            name: user.fullName,
+            email: user.email,
+            role: firstLetter === "A" ? "Admin" : "Voter",
+        };
+
+        if (user.status !== undefined) {
+            userData.status = user.status; // Only include status if it exists
+        }
+
         res.status(200).json({
             success: true,
             message: "Login successful.",
-            user: {
-                userID: user.userID,
-                name: user.fullName,
-                email: user.email,
-                role: firstLetter === "A" ? "Admin" : "Voter",
-                status: user.status, // Ensure status is returned
-            },
+            user: userData,
         });
     } catch (error) {
         console.error("Login Error:", error);

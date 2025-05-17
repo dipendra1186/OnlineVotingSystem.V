@@ -212,10 +212,10 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 p-6">
+    <div class="main-content scrollable-content">
         <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-lg">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Candidate Management</h2>
-
+    
             <!-- Election Selector -->
             <div class="mb-6 p-4 bg-blue-50 rounded-lg">
                 <div class="flex items-center justify-between">
@@ -228,7 +228,7 @@
                     </select>
                 </div>
             </div>
-
+    
             <!-- Add/Edit Candidate Form -->
             <form id="candidateForm" class="bg-gray-50 p-6 rounded-lg shadow-md" enctype="multipart/form-data">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -237,8 +237,8 @@
                     <input type="text" id="candidateParty" placeholder="Party Affiliation" class="p-3 border rounded-lg"
                         required>
                     <input type="number" id="candidateAge" placeholder="Age" class="p-3 border rounded-lg" required>
-                    <input type="text" id="candidateQualification" placeholder="Qualification"
-                        class="p-3 border rounded-lg" required>
+                    <input type="text" id="candidateQualification" placeholder="Qualification" class="p-3 border rounded-lg"
+                        required>
                     <input type="text" id="candidatePromises" placeholder="Promises if Elected"
                         class="p-3 border rounded-lg" required>
                     <div class="col-span-2">
@@ -247,10 +247,11 @@
                         <img id="photoPreview" class="mt-4 w-32 h-32 object-cover rounded-full hidden" />
                     </div>
                 </div>
-                <button type="submit" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg">Add
+                <button type="submit"
+                    class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Add
                     Candidate</button>
             </form>
-
+    
             <!-- Candidate List -->
             <div class="overflow-x-auto mt-6">
                 <table class="w-full bg-white border rounded-lg shadow-md">
@@ -273,7 +274,7 @@
             </div>
         </div>
     </div>
-    </div>
+    
 
     <script>
         let editMode = false;

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -91,15 +92,22 @@
             margin-bottom: 1rem;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .notification-card:hover {
+            transform: translateY(-2px);
         }
 
         .notification-card h3 {
             font-size: 1.2rem;
             font-weight: bold;
+            color: #1e3a8a;
         }
 
         .notification-card p {
             margin: 0.5rem 0;
+            color: #4b5563;
         }
 
         .btn {
@@ -109,6 +117,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
+            transition: all 0.2s ease;
         }
 
         .btn-edit {
@@ -123,6 +132,7 @@
 
         .btn:hover {
             opacity: 0.9;
+            transform: scale(1.05);
         }
 
         .form-container {
@@ -141,6 +151,14 @@
             margin-bottom: 1rem;
             border: 1px solid #d1d5db;
             border-radius: 6px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-container input:focus,
+        .form-container textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
 
         .form-container button {
@@ -151,10 +169,247 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
+            transition: all 0.2s ease;
         }
 
         .form-container button:hover {
             background-color: #059669;
+            transform: translateY(-2px);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 0.5rem 0;
+        }
+
+        .stat-card p {
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 8px;
+            color: white;
+            max-width: 300px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background-color: #10b981;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .no-notifications {
+            background: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            color: #6b7280;
+        }
+
+        .search-bar {
+            margin-bottom: 1rem;
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .modal-btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Toggle switch styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: #10b981;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-label {
+            font-size: 1rem;
+            color: #4b5563;
         }
     </style>
 </head>
@@ -174,16 +429,68 @@
         <button class="logout-btn">Logout</button>
     </div>
 
+    <!-- Toast notifications -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal popup -->
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Notification Added</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Your notification has been added successfully!</p>
+                <div class="toggle-container">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="auto-refresh-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">Enable auto-refresh</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-primary" onclick="handleModalConfirm()">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-content">
-        <h1 class="text-2xl font-bold mb-6">Manage Notifications</h1>
+        <div class="notification-header">
+            <h1 class="text-2xl font-bold">Manage Notifications</h1>
+        </div>
+
+        <!-- Statistics cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <p>Total Notifications</p>
+                <h3 id="total-count">0</h3>
+            </div>
+            <div class="stat-card">
+                <p>Added Today</p>
+                <h3 id="today-count">0</h3>
+            </div>
+            <div class="stat-card">
+                <p>This Week</p>
+                <h3 id="week-count">0</h3>
+            </div>
+        </div>
 
         <!-- Form to add new notification -->
         <div class="form-container">
             <h2 class="text-xl font-semibold mb-4">Create New Notification</h2>
-            <input type="text" id="title" placeholder="Title">
-            <textarea id="message" rows="4" placeholder="Message"></textarea>
-            <button onclick="addNotification()">Add Notification</button>
+            <input type="text" id="title" placeholder="Title" maxlength="50">
+            <textarea id="message" rows="4" placeholder="Message" maxlength="200"></textarea>
+            <button id="add-btn" onclick="addNotification()">Add Notification</button>
+        </div>
+
+        <!-- Search bar -->
+        <input type="text" id="search-bar" class="search-bar" placeholder="Search notifications...">
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            <p>Loading notifications...</p>
         </div>
 
         <!-- Notification list -->
@@ -191,104 +498,303 @@
     </div>
 
     <script>
-        async function fetchNotifications() {
-                console.log("Fetching notifications...");
-                try {
-                    const response = await fetch('/api/notifications');
-                    const data = await response.json();
-                    console.log("Fetched notifications:", data); // Log the fetched data
+        // Global variables
+        let notifications = [];
+        let isAddingNotification = false;
+        let autoRefreshEnabled = true;
 
-                    if (data.success && Array.isArray(data.notifications)) {
-                        const list = document.getElementById('notification-list');
-                        list.innerHTML = ''; // Clear previous content
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
 
-                        if (data.notifications.length > 0) {
-                            data.notifications.forEach(notification => {
-                                const card = document.createElement('div');
-                                card.className = 'notification-card';
-                                card.innerHTML = `
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Open modal
+        function openModal() {
+            document.getElementById('confirmation-modal').classList.add('show');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.remove('show');
+        }
+
+        // Handle modal confirm button click
+        function handleModalConfirm() {
+            autoRefreshEnabled = document.getElementById('auto-refresh-toggle').checked;
+            closeModal();
+
+            if (autoRefreshEnabled) {
+                // Refresh page to update all data
+                window.location.reload();
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            const totalCount = notifications.length;
+            document.getElementById('total-count').textContent = totalCount;
+
+            // Count notifications added today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayCount = notifications.filter(n => {
+                const date = new Date(n.created_at);
+                return date >= today;
+            }).length;
+
+            document.getElementById('today-count').textContent = todayCount;
+
+            // Count notifications added this week
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+
+            const weekCount = notifications.filter(n => {
+                const date = new Date(n.created_at);
+                return date >= weekStart;
+            }).length;
+
+            document.getElementById('week-count').textContent = weekCount;
+        }
+
+        // Filter notifications based on search input
+        function filterNotifications() {
+            const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+
+            const filtered = searchTerm ?
+                notifications.filter(n =>
+                    n.title.toLowerCase().includes(searchTerm) ||
+                    n.message.toLowerCase().includes(searchTerm)
+                ) :
+                notifications;
+
+            renderNotifications(filtered);
+        }
+
+        // Render notifications to the DOM
+        function renderNotifications(notificationsToRender) {
+            const list = document.getElementById('notification-list');
+            list.innerHTML = ''; // Clear previous content
+
+            if (notificationsToRender.length > 0) {
+                notificationsToRender.forEach(notification => {
+                    const card = document.createElement('div');
+                    card.className = 'notification-card';
+
+                    // Format date
+                    const date = new Date(notification.created_at);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    card.innerHTML = `
                         <h3>${notification.title}</h3>
                         <p>${notification.message}</p>
-                        <small>${new Date(notification.created_at).toLocaleString()}</small>
+                        <small class="text-gray-500">${formattedDate}</small>
                         <div class="mt-4">
                             <button class="btn btn-edit" onclick="editNotification(${notification.id})">Edit</button>
                             <button class="btn btn-delete" onclick="deleteNotification(${notification.id})">Delete</button>
                         </div>
                     `;
-                                list.appendChild(card);
-                            });
-                        } else {
-                            list.innerHTML = '<p>No notifications available.</p>';
-                        }
-                    } else {
-                        console.error('Failed to fetch notifications. Invalid response structure.');
-                        alert("Failed to fetch notifications. Please try again later.");
-                    }
-                } catch (error) {
-                    console.error('Error fetching notifications:', error);
-                    alert("Failed to fetch notifications. Please try again later.");
-                }
+                    list.appendChild(card);
+                });
+            } else {
+                list.innerHTML = '<div class="no-notifications"><p>No notifications available.</p></div>';
             }
+        }
 
+        // Fetch notifications from API
+        async function fetchNotifications() {
+            document.getElementById('loading').style.display = 'block';
 
+            try {
+                const response = await fetch('/api/notifications');
+
+                // Set timeout to ensure we don't wait forever
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Request timed out')), 5000);
+                });
+
+                // Race between fetch and timeout
+                const data = await Promise.race([
+                    response.json(),
+                    timeoutPromise
+                ]);
+
+                if (data && data.success && Array.isArray(data.notifications)) {
+                    notifications = data.notifications;
+                    updateStats();
+                    renderNotifications(notifications);
+                } else {
+                    console.error('Failed to fetch notifications. Invalid response structure:', data);
+                    // Don't show error toast on initial load to avoid confusion
+                    if (notifications.length > 0) {
+                        showToast('Failed to refresh notifications', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                // Don't show error toast on initial load to avoid confusion
+                if (notifications.length > 0) {
+                    showToast('Failed to refresh notifications', 'error');
+                }
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Add new notification
         async function addNotification() {
-            const title = document.getElementById('title').value;
-            const message = document.getElementById('message').value;
+            const title = document.getElementById('title').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const addBtn = document.getElementById('add-btn');
 
             if (!title || !message) {
-                alert('Please fill in both title and message!');
+                showToast('Please fill in both title and message!', 'error');
                 return;
             }
 
+            // Clear form immediately for better user experience
+            document.getElementById('title').value = '';
+            document.getElementById('message').value = '';
+
+            // Disable button and show loading state
+            addBtn.disabled = true;
+            addBtn.textContent = 'Adding...';
+
+            // Set a timeout to reset the button state after 5 seconds regardless of response
+            setTimeout(() => {
+                addBtn.disabled = false;
+                addBtn.textContent = 'Add Notification';
+            }, 5000);
+
             try {
-                await fetch('/api/notifications', {
+                const response = await fetch('/api/notifications', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title, message })
                 });
-                document.getElementById('title').value = '';
-                document.getElementById('message').value = '';
-                fetchNotifications();
+
+                const data = await response.json();
+
+                // Reset button state immediately after sending request
+                addBtn.disabled = false;
+                addBtn.textContent = 'Add Notification';
+
                 if (data.success) {
-                    alert('Notification added successfully!');
+                    // Optimistically add the notification to the UI
+                    const tempNotification = {
+                        id: data.id || 'temp-' + Date.now(),
+                        title: title,
+                        message: message,
+                        created_at: new Date().toISOString()
+                    };
+
+                    notifications.unshift(tempNotification);
+                    updateStats();
+                    renderNotifications(notifications);
+
+                    // Open confirmation modal instead of showing toast
+                    openModal();
+                } else {
+                    showToast('Error adding notification. Please try again.', 'error');
                 }
             } catch (error) {
                 console.error('Error adding notification:', error);
+                showToast('Error adding notification. Please try again.', 'error');
+
+                // Reset button state
+                addBtn.disabled = false;
+                addBtn.textContent = 'Add Notification';
             }
         }
 
+        // Delete notification
         async function deleteNotification(id) {
             if (confirm('Are you sure you want to delete this notification?')) {
                 try {
-                    await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
-                    fetchNotifications();
+                    const response = await fetch(`/api/notifications/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('Notification deleted successfully!');
+                        fetchNotifications();
+                    } else {
+                        showToast('Failed to delete notification', 'error');
+                    }
                 } catch (error) {
                     console.error('Error deleting notification:', error);
+                    showToast('An error occurred while deleting', 'error');
                 }
             }
         }
 
+        // Edit notification
         async function editNotification(id) {
-            const newTitle = prompt('Enter new title:');
-            const newMessage = prompt('Enter new message:');
+            // Find the notification to pre-fill the values
+            const notification = notifications.find(n => n.id === id);
 
-            if (newTitle && newMessage) {
+            if (!notification) {
+                showToast('Notification not found', 'error');
+                return;
+            }
+
+            const newTitle = prompt('Enter new title:', notification.title);
+
+            if (newTitle === null) return; // User cancelled
+
+            const newMessage = prompt('Enter new message:', notification.message);
+
+            if (newMessage === null) return; // User cancelled
+
+            if (newTitle.trim() && newMessage.trim()) {
                 try {
-                    await fetch(`/api/notifications/${id}`, {
+                    const response = await fetch(`/api/notifications/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ title: newTitle, message: newMessage })
                     });
-                    fetchNotifications();
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('Notification updated successfully!');
+                        fetchNotifications();
+                    } else {
+                        showToast('Failed to update notification', 'error');
+                    }
                 } catch (error) {
                     console.error('Error updating notification:', error);
+                    showToast('An error occurred while updating', 'error');
                 }
+            } else {
+                showToast('Title and message cannot be empty', 'error');
             }
         }
 
-        window.onload = fetchNotifications;
-    </script>
+        // Initialize on page load
+        window.onload = function () {
+            fetchNotifications();
 
+            // Add search functionality
+            document.getElementById('search-bar').addEventListener('input', filterNotifications);
+        };
+    </script>
 </body>
 
 </html>

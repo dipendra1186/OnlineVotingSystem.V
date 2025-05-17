@@ -120,7 +120,7 @@
             }; resizeBy
 
             try {
-                const response = await fetch('http://localhost:3000/api/signup', {
+                const response = await fetch('https://clearly-ethical-worm.ngrok-free.app/api/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
@@ -133,7 +133,7 @@
                     localStorage.setItem('userEmail', userData.email);
                     localStorage.setItem('role', data.role);
                     alert("OTP Sent to your email address");
-                    window.location.href = './vDashboard';
+                    window.location.href = './otp';
                 } else {
                     alert(data.message);
                 }
