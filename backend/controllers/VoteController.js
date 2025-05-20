@@ -253,9 +253,10 @@ exports.castVote = async (req, res) => {
 
             // Log the vote using the same timestamp
             await connection.execute(
-                "INSERT INTO votes_log (voterID, electionID, vote_time) VALUES (?, ?, ?)",
-                [voterID, parsedElectionID, voteTimestamp]
+                "INSERT INTO votes_log (voterID, candidateID, electionID, vote_time) VALUES (?, ?, ?, ?)",
+                [voterID, parsedCandidateID, parsedElectionID, voteTimestamp]
             );
+            
 
             // Increment the candidate's vote count
             await connection.execute(

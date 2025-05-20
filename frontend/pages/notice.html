@@ -6,12 +6,11 @@
     <title>All Notices</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-    <!-- Your CSS styling (already perfect) is here -->
     <style>
         * {
             box-sizing: border-box;
         }
-    
+
         body {
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
@@ -20,7 +19,7 @@
             height: 100vh;
             overflow: hidden;
         }
-    
+
         .sidebar {
             position: fixed;
             width: 250px;
@@ -31,23 +30,23 @@
             display: flex;
             flex-direction: column;
         }
-    
+
         .sidebar h2 {
             font-size: 1.8rem;
             margin-bottom: 2rem;
             font-weight: 600;
         }
-    
+
         .sidebar ul {
             list-style: none;
             padding: 0;
             flex: 1;
         }
-    
+
         .sidebar li {
             margin: 1rem 0;
         }
-    
+
         .sidebar a {
             text-decoration: none;
             color: white;
@@ -57,12 +56,12 @@
             border-radius: 8px;
             transition: background-color 0.3s ease;
         }
-    
+
         .sidebar a:hover,
         .sidebar a.active {
             background-color: #3b82f6;
         }
-    
+
         .logout-btn {
             margin-top: 2rem;
             background-color: #ef4444;
@@ -74,11 +73,11 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-    
+
         .logout-btn:hover {
             background-color: #dc2626;
         }
-    
+
         .main-content {
             margin-left: 250px;
             padding: 2.5rem;
@@ -89,19 +88,19 @@
             height: 100vh;
             box-sizing: border-box;
         }
-    
+
         .main-content h1 {
             font-size: 2rem;
             font-weight: bold;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
-    
+
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
         }
-    
+
         .bg-white {
             background-color: white;
             padding: 1.5rem;
@@ -109,34 +108,34 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-    
+
         .bg-white:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
-    
+
         .bg-white h3 {
             font-size: 1.2rem;
             margin-bottom: 1rem;
             font-weight: 600;
         }
-    
+
         .bg-white p {
             font-size: 1.5rem;
             font-weight: bold;
         }
-    
+
         .countdown {
             font-size: 2rem;
             font-weight: bold;
         }
-    
+
         canvas {
             width: 100%;
             height: 300px;
             margin-top: 2rem;
         }
-    
+
         .profile-pic {
             width: 80px;
             height: 80px;
@@ -144,7 +143,7 @@
             object-fit: cover;
             border: 3px solid #3b82f6;
         }
-    
+
         .badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -152,22 +151,40 @@
             font-size: 0.875rem;
             font-weight: 600;
         }
-    
+
         .badge-success {
             background-color: #10b981;
             color: white;
         }
-    
+
         .badge-warning {
             background-color: #f59e0b;
             color: white;
         }
-    
+
         .badge-pending {
             background-color: #6b7280;
             color: white;
         }
-    
+
+        /* Notice Card Title Enhancement */
+        .notice-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+            display: block;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .notice-message {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #4b5563;
+        }
+
         .vote-btn {
             background-color: #3b82f6;
             color: white;
@@ -178,29 +195,29 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-    
+
         .vote-btn:hover {
             background-color: #2563eb;
         }
-    
+
         .vote-btn:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
         }
-    
+
         /* Flexbox container for splitting the sections */
         .flex {
             display: flex;
         }
-    
+
         .space-x-6 {
             gap: 1.5rem;
         }
-    
+
         .flex-1 {
             flex: 1;
         }
-    
+
         /* Notification Styling */
         .notification {
             background-color: #f3f4f6;
@@ -209,23 +226,23 @@
             margin-bottom: 1rem;
             border-radius: 4px;
         }
-    
+
         .notification.important {
             border-left-color: #ef4444;
         }
-    
+
         .notification time {
             font-size: 0.875rem;
             color: #6b7280;
         }
-    
+
         .steps {
             display: flex;
             justify-content: space-between;
             margin: 2rem 0;
             position: relative;
         }
-    
+
         .steps::before {
             content: '';
             position: absolute;
@@ -236,13 +253,13 @@
             background: #e5e7eb;
             z-index: 0;
         }
-    
+
         .step {
             position: relative;
             z-index: 1;
             text-align: center;
         }
-    
+
         .step-circle {
             width: 30px;
             height: 30px;
@@ -254,159 +271,135 @@
             margin: 0 auto 0.5rem;
             font-weight: bold;
         }
-    
+
         .step.active .step-circle {
             background-color: #3b82f6;
             color: white;
         }
-    
+
         .step.completed .step-circle {
             background-color: #10b981;
             color: white;
         }
-    
+
+        /* Tab Styling */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .notice-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            min-width: 1.5rem;
+            height: 1.5rem;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            font-weight: 600;
+        }
+
+        .notice-count.unread {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .notice-item {
+            position: relative;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem auto;
+            color: #9ca3af;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
                 padding: 1.5rem;
                 display: none;
             }
-    
+
             .main-content {
                 margin-left: 0;
                 width: 100%;
                 padding: 1.5rem;
                 box-sizing: border-box;
             }
-    
+
             .grid {
                 grid-template-columns: 1fr;
             }
-    
+
             .sidebar a {
                 font-size: 1rem;
             }
-    
+
             .bg-white {
                 padding: 1rem;
             }
-    
+
             .bg-white h3 {
                 font-size: 1rem;
             }
-    
+
             .bg-white p {
                 font-size: 1.2rem;
             }
-    
+
             .logout-btn {
                 padding: 0.7rem;
                 font-size: 1rem;
-            }
-    
-            /* Main Container Styles */
-            .bg-white {
-                background-color: #ffffff;
-            }
-    
-            .p-6 {
-                padding: 1.5rem;
-            }
-    
-            .mt-6 {
-                margin-top: 1.5rem;
-            }
-    
-            .shadow {
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            }
-    
-            .rounded {
-                border-radius: 8px;
-            }
-    
-            /* Title Styling */
-            h2.text-xl {
-                font-size: 1.25rem;
-                font-weight: bold;
-                color: #333333;
-            }
-    
-            h2.font-bold {
-                font-weight: 600;
-            }
-    
-            /* Featured Election Card */
-            #featuredelection {
-                margin-top: 1rem;
-            }
-    
-            #featuredelection .bg-gray-100 {
-                background-color: #f7fafc;
-                padding: 1.25rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-    
-            #featuredelection .bg-gray-100:hover {
-                transform: scale(1.02);
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-            }
-    
-            #featuredelection h3 {
-                font-size: 1.125rem;
-                font-weight: 600;
-                color: #333333;
-            }
-    
-            #featuredelection p {
-                color: #4a5568;
-                font-size: 0.875rem;
-                line-height: 1.5;
-            }
-    
-            #featuredelection .text-sm {
-                font-size: 0.875rem;
-                color: #6b7280;
-            }
-    
-            #featuredelection .text-gray-500 {
-                color: #6b7280;
-            }
-    
-            /* Election Status Styling */
-            .status-container {
-                margin-top: 1rem;
-            }
-    
-            .status-container .status-label {
-                font-weight: 600;
-                font-size: 0.875rem;
-                color: #4a5568;
-            }
-    
-            .status-container .status-value {
-                font-size: 1rem;
-                color: #2d3748;
-            }
-    
-            .status-container .status-value.upcoming {
-                color: #38a169;
-            }
-    
-            .status-container .status-value.ongoing {
-                color: #f6ad55;
-            }
-    
-            .status-container .status-value.ended {
-                color: #e53e3e;
-            }
-    
-            /* Loading Text Styling */
-            #featuredelection p.text-gray-500 {
-                font-size: 1rem;
-                color: #6b7280;
             }
         }
     </style>
@@ -414,7 +407,6 @@
 
 <body>
     <div class="sidebar">
-        <!-- Sidebar code here (Profile, Navigation, Logout button) -->
         <h2>Notices</h2>
         <ul>
             <li><a href="/vDashboard">Dashboard</a></li>
@@ -424,15 +416,32 @@
             <li><a href="/help">Help & Support</a></li>
         </ul>
         <button class="logout-btn">Logout</button>
-        </div>
     </div>
 
     <div class="main-content flex-1 p-6">
-        <h1 class="text-2xl font-bold mb-6">Notices</h1>
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold">Notices</h1>
+        </div>
 
-        <ul id="notice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Notices will be dynamically inserted here -->
-        </ul>
+        <div class="tab-container">
+            <div class="tab active" data-tab="all">
+                All Notices <span id="all-count" class="notice-count">0</span>
+            </div>
+        </div>
+
+        <div id="all-notices" class="tab-content active">
+            <ul id="notice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Notices will be dynamically inserted here -->
+                <li class="col-span-full empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <h3>No notices available</h3>
+                    <p>You don't have any notices at this time</p>
+                </li>
+            </ul>
+        </div>
 
         <a href="/dashboard" class="mt-10 text-blue-600 underline hover:text-blue-800">← Back to Dashboard</a>
     </div>
@@ -440,79 +449,120 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const noticeList = document.getElementById('notice-list');
+            const allCount = document.getElementById('all-count');
 
+            // Initialize notice data
+            window.noticeData = [];
+
+            // Fetch notices
             try {
                 const response = await fetch('/api/notice');
                 const data = await response.json();
 
                 if (response.ok) {
                     if (data.length === 0) {
-                        noticeList.innerHTML = '<li class="col-span-full text-center text-gray-500">No notices found.</li>';
+                        // Keep the empty state message
                     } else {
-                        noticeList.innerHTML = '';
+                        // Store notice data
+                        window.noticeData = data;
 
-                        data.forEach((notice, index) => {
-                            const li = document.createElement('li');
-                            li.className = 'bg-white p-6 rounded-xl shadow-lg relative transition-all duration-300 hover:shadow-2xl';
-
-                            const truncated = notice.message.length > 120
-                                ? notice.message.substring(0, 120) + '...'
-                                : notice.message;
-
-                            const fullId = `full-message-${index}`;
-                            const isTruncated = notice.message.length > 120;
-
-                            li.innerHTML = `
-                                    <div class="flex items-start space-x-4">
-                                        <div class="flex-shrink-0">
-                                            <div class="bg-blue-100 text-blue-600 rounded-full w-10 h-10 flex items-center justify-center">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                          d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="flex-1">
-                                            <h3 class="text-lg font-semibold text-gray-800 mb-1">${notice.title}</h3>
-                                            <p class="text-gray-600" id="${fullId}">${truncated}</p>
-                                            ${isTruncated
-                                    ? `<button onclick="toggleMessage('${fullId}', ${index})"
-                                                           class="text-blue-600 mt-2 text-sm hover:underline">
-                                                    Read more
-                                                   </button>`
-                                    : ''
-                                }
-                                            <time class="block text-xs text-gray-400 mt-2">${new Date(notice.created_at).toLocaleString()}</time>
-                                        </div>
-                                    </div>
-                                `;
-
-                            noticeList.appendChild(li);
-                        });
+                        // Render notices
+                        renderNotices();
                     }
                 } else {
-                    noticeList.innerHTML = '<li class="text-center text-red-500 col-span-full">Failed to load notices.</li>';
+                    showError('Failed to load notices.');
                 }
             } catch (error) {
                 console.error('Error fetching notices:', error);
-                noticeList.innerHTML = '<li class="text-center text-red-500 col-span-full">Error fetching notices.</li>';
+                showError('Error fetching notices.');
+            }
+
+            function renderNotices() {
+                // Clear list
+                noticeList.innerHTML = '';
+
+                // Update count
+                allCount.textContent = window.noticeData.length;
+
+                // Check if list is empty
+                if (window.noticeData.length === 0) {
+                    noticeList.innerHTML = `
+                        <li class="col-span-full empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            <h3>No notices available</h3>
+                            <p>You don't have any notices at this time</p>
+                        </li>
+                    `;
+                    return;
+                }
+
+                // Add notices to list
+                window.noticeData.forEach((notice, index) => {
+                    const li = createNoticeElement(notice, index);
+                    noticeList.appendChild(li);
+                });
+            }
+
+            function createNoticeElement(notice, index) {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-6 rounded-xl shadow-lg relative transition-all duration-300 hover:shadow-2xl notice-item';
+
+                const truncated = notice.message.length > 120
+                    ? notice.message.substring(0, 120) + '...'
+                    : notice.message;
+
+                const fullId = `full-message-${index}`;
+                const isTruncated = notice.message.length > 120;
+
+                li.innerHTML = `
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="bg-blue-100 text-blue-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="mb-1">
+                                <h3 class="notice-title">${notice.title}</h3>
+                            </div>
+                            <p class="notice-message" id="${fullId}">${truncated}</p>
+                            ${isTruncated
+                        ? `<button class="text-blue-600 mt-2 text-sm hover:underline" onclick="toggleMessage('${fullId}', ${index})">
+                                       Read more
+                                   </button>`
+                        : ''
+                    }
+                            <time class="block text-xs text-gray-400 mt-2">${new Date(notice.created_at).toLocaleString()}</time>
+                        </div>
+                    </div>
+                `;
+
+                return li;
+            }
+
+            function showError(message) {
+                noticeList.innerHTML = `<li class="text-center text-red-500 col-span-full">${message}</li>`;
             }
         });
 
+        // Function to toggle message expansion
         function toggleMessage(id, index) {
             const el = document.getElementById(id);
             const current = el.innerText;
-            const original = window.noticeData[index].message;
+            const notice = window.noticeData[index];
 
             if (current.endsWith('...')) {
-                el.innerText = original;
+                el.innerText = notice.message;
             } else {
-                el.innerText = original.substring(0, 120) + '...';
+                el.innerText = notice.message.substring(0, 120) + '...';
             }
         }
     </script>
-    
-
 </body>
 
 </html>

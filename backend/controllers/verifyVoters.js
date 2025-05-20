@@ -1,12 +1,11 @@
 const db = require('../config/db');
 const nodemailer = require('nodemailer');
 
-
 // GET: Fetch voters pending verification
 exports.getPendingVoters = async (req, res) => {
     try {
         const [voters] = await db.query("SELECT * FROM voters WHERE status = 'Pending'");
-        res.json(voters); // Return array to frontend
+        res.json(voters);
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: "Failed to fetch pending voters", error: err });
@@ -18,9 +17,9 @@ exports.verifyVoter = async (req, res) => {
     const voterID = req.params.voterID;
 
     try {
-        // Update both isVerified and status
+        // Update status only (remove isVerified logic)
         const [result] = await db.query(
-            `UPDATE voters SET isVerified = 1, status = 'Verified' WHERE voterID = ?`,
+            `UPDATE voters SET status = 'Verified' WHERE voterID = ?`,
             [voterID]
         );
 
@@ -37,7 +36,6 @@ exports.verifyVoter = async (req, res) => {
         let email = voterInfo[0].email;
         const fullName = voterInfo[0].fullName;
 
-        // Strip hyphenated email (used in initial signup)
         if (email) {
             email = email.split('-')[0];
         }
@@ -60,7 +58,7 @@ async function sendVerificationEmail(email, fullName) {
         service: 'gmail',
         auth: {
             user: 'timalsinadipendra125@gmail.com',
-            pass: 'gtfc mlza rgzr vlwx', // Replace with your secure app password
+            pass: 'gtfc mlza rgzr vlwx',
         }
     });
 
@@ -92,7 +90,7 @@ exports.rejectVoter = async (req, res) => {
 
     try {
         const [result] = await db.query(
-            `UPDATE voters SET status = 'Rejected', isVerified = 0 WHERE voterID = ?`,
+            `UPDATE voters SET status = 'Rejected' WHERE voterID = ?`,
             [voterID]
         );
 
@@ -125,7 +123,7 @@ exports.rejectVoter = async (req, res) => {
     }
 };
 
-
+// Send voter rejection email
 async function sendRejectionEmail(email, fullName) {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -156,7 +154,3 @@ async function sendRejectionEmail(email, fullName) {
         throw new Error("Failed to send rejection email.");
     }
 }
-
-
-
-

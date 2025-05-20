@@ -2,7 +2,6 @@
 const express = require("express");
 const router = express.Router();
 const countdownController = require("../controllers/countdown");
-const verifycountdown = require("../middleware/countdown");
 
 
 /**
@@ -22,3 +21,5 @@ router.get("/get/:adminID", countdownController.getElectionTime);
 router.delete("/delete/:adminID", countdownController.deleteElectionTime);
 
 module.exports = router;
+
+

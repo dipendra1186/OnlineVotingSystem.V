@@ -116,6 +116,46 @@
             color: #0056b3;
             text-decoration: underline;
         }
+        .modal {
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 128, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+
+.checkmark {
+    font-size: 50px;
+    color: green;
+    animation: pop 0.4s ease-out;
+    margin-bottom: 10px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
     </style>
 </head>
 
@@ -141,6 +181,13 @@
 
                     <button type="submit">Sign In</button>
                 </form>
+                <!-- Success Popup Modal -->
+                <div id="successModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="checkmark">&#10003;</div>
+                        <p>Login Successful! Redirecting...</p>
+                    </div>
+                </div>
                 <div class="links">
                     <a href="/forgotpassword" style="display: block; margin-bottom: 10px;">Forgot Password?</a>
                     <a href="/signup" font-weight: bold;">Don't have an account? Sign Up</a>
@@ -181,36 +228,36 @@
                     console.log("User object:", data.user);
                     console.log("UserID to store:", data.user.userID || data.userID || "not found");
 
-                    // Store data in localStorage (ensure only non-sensitive data is stored)
+                    // Store in localStorage
                     localStorage.setItem('userID', data.user.userID);
                     localStorage.setItem('role', data.user.role);
-                    localStorage.setItem('status', data.user.status); // Store status as well
+                    localStorage.setItem('status', data.user.status);
 
-                    // You can also log the status if you want to show custom messages
-                    console.log('User status:', data.user.status);
+                    // Show success popup
+                    document.getElementById('successModal').style.display = 'flex';
 
-                    // Redirect based on role
-                    const role = data.user.role.toLowerCase();
-                    if (role === 'voter') {
-                        window.location.href = "/vDashboard";
-                    } else if (role === 'admin') {
-                        window.location.href = "/dashboard";
-                    } else {
-                        window.location.href = "/"; // fallback
-                    }
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        const role = data.user.role.toLowerCase();
+                        if (role === 'voter') {
+                            window.location.href = "/vDashboard";
+                        } else if (role === 'admin') {
+                            window.location.href = "/dashboard";
+                        } else {
+                            window.location.href = "/";
+                        }
+                    }, 2000);
+
                 } else {
                     alert('Login failed: ' + (data.message || 'Invalid credentials'));
                 }
             } catch (error) {
-                alert('Error: Unable to connect to the API');
                 console.error('Error:', error);
+                alert('Login failed: ' + error.message);
             }
+
         }
     </script>
-    
-    
-    
-
 
 </body>
 

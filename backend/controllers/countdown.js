@@ -98,31 +98,38 @@ const deleteElectionTime = async (req, res) => {
 
 const updateElectionStatus = async () => {
     try {
-        const [electionRows] = await pool.query('SELECT * FROM election_times ORDER BY id DESC LIMIT 1');
+        const [electionRows] = await pool.query('SELECT * FROM election_times');
 
         if (!electionRows || electionRows.length === 0) {
             console.warn('⚠️ No election time found in database.');
             return;
         }
 
-        const { id, end_time, start_time, status } = electionRows[0];
         const currentTime = new Date();
-        const electionEndTime = new Date(end_time);
-        const electionStartTime = new Date(start_time);
 
-        let newStatus = status;
+        for (const election of electionRows) {
+            const { id, end_time, start_time, status } = election;
 
-        if (currentTime < electionStartTime) {
-            newStatus = 'upcoming';
-        } else if (currentTime >= electionStartTime && currentTime < electionEndTime) {
-            newStatus = 'ongoing';
-        } else if (currentTime >= electionEndTime) {
-            newStatus = 'ended';
-        }
+            const electionEndTime = new Date(end_time);
+            const electionStartTime = new Date(start_time);
 
-        if (newStatus !== status) {
-            await pool.query('UPDATE election_times SET status = ?, updated_at = NOW() WHERE id = ?', [newStatus, id]);
-            console.log(`✅ Election status updated to: ${newStatus}`);
+            let newStatus = status;
+
+            if (currentTime < electionStartTime) {
+                newStatus = 'upcoming';
+            } else if (currentTime >= electionStartTime && currentTime < electionEndTime) {
+                newStatus = 'ongoing';
+            } else if (currentTime >= electionEndTime) {
+                newStatus = 'ended';
+            }
+
+            if (newStatus !== status) {
+                await pool.query(
+                    'UPDATE election_times SET status = ?, updated_at = NOW() WHERE id = ?',
+                    [newStatus, id]
+                );
+                console.log(`✅ Election ID ${id} status updated to: ${newStatus}`);
+            }
         }
     } catch (err) {
         if (err.code === 'ECONNREFUSED') {
@@ -132,6 +139,29 @@ const updateElectionStatus = async () => {
         }
     }
 };
+
+
+const countdownController = async (req, res, next) => {
+    const { adminID } = req.body || req.params;
+
+    if (!adminID) {
+        return res.status(400).json({ message: "Missing admin ID" });
+    }
+
+    try {
+        const [result] = await pool.query("SELECT role FROM users WHERE id = ?", [adminID]);
+
+        if (result.length === 0 || result[0].role !== 'admin') {
+            return res.status(403).json({ message: "Access denied: not an admin" });
+        }
+
+        next();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};
+
 const startElectionStatusUpdater = async () => {
     try {
         await pool.query('SELECT 1');
@@ -148,6 +178,7 @@ startElectionStatusUpdater();
 setInterval(updateElectionStatus, 1000); // every second
 
 module.exports = {
+    countdownController,
     setElectionTime,
     getElectionTime,
     deleteElectionTime

@@ -1,15 +1,22 @@
-const db = require('../config/db'); // Import the database connection
+const db = require('../config/db');
+const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: 'gtfc mlza rgzr vlwx',
+    }
+});
+
+const MAX_ATTEMPTS = 5;
+const BLOCK_DURATION_MINUTES = 30;
 
 const verifyOTP = async (req, res) => {
     try {
-        console.log('Request Body:', req.body);
-        
         const { userID, email, otp } = req.body;
 
-        // Check for missing fields
         if (!userID || !email || !otp) {
-            console.log('❌ Missing fields detected');
             return res.status(400).json({ message: 'User ID, Email, and OTP are required' });
         }
 
@@ -17,17 +24,17 @@ const verifyOTP = async (req, res) => {
         let table = '';
         let idColumn = '';
 
-        // 🔍 Check in VOTERS table
-        const [voterRows] = await db.query("SELECT voterID AS id, email, otp FROM voters WHERE voterID = ?", [userID]);
+        // Check VOTERS
+        const [voterRows] = await db.query("SELECT * FROM voters WHERE voterID = ?", [userID]);
         if (voterRows.length > 0) {
             user = voterRows[0];
             table = 'voters';
             idColumn = 'voterID';
         }
 
-        // 🔍 Check in ADMINS table if not found in voters
+        // Check ADMINS
         if (!user) {
-            const [adminRows] = await db.query("SELECT adminID AS id, email, otp FROM admins WHERE adminID = ?", [userID]);
+            const [adminRows] = await db.query("SELECT * FROM admins WHERE adminID = ?", [userID]);
             if (adminRows.length > 0) {
                 user = adminRows[0];
                 table = 'admins';
@@ -35,47 +42,73 @@ const verifyOTP = async (req, res) => {
             }
         }
 
-        // ❌ No user found
         if (!user) {
             return res.status(400).json({ message: 'Invalid User ID' });
         }
 
-        // Extract original email part (before the suffix)
-        // This handles both formats: username-initials@domain.com and username@domain.com-initials
+        // Check if user is blocked
+        if (user.otp_block_until && new Date(user.otp_block_until) > new Date()) {
+            return res.status(403).json({ message: 'Account is temporarily blocked due to multiple failed OTP attempts. Try again later.' });
+        }
+
+        // Parse email suffix
         const storedEmail = user.email;
         const hasEmailSuffix = storedEmail.includes('@') && 
             ((storedEmail.split('@')[1].includes('-')) || 
              (storedEmail.includes('-') && storedEmail.indexOf('-') > storedEmail.indexOf('@')));
-        
+
         let originalEmail;
-        
         if (hasEmailSuffix) {
             if (storedEmail.split('@')[1].includes('-')) {
-                // Format: username@domain-initials.com
                 const parts = storedEmail.split('@');
                 const domainParts = parts[1].split('-');
                 originalEmail = parts[0] + '@' + domainParts[0];
             } else {
-                // Format: username@domain.com-initials
                 originalEmail = storedEmail.substring(0, storedEmail.lastIndexOf('-'));
             }
         } else {
             originalEmail = storedEmail;
         }
 
-        // ❌ Email does not match
         if (originalEmail !== email) {
             return res.status(400).json({ message: 'Email does not match with User ID' });
         }
 
-        // ❌ OTP is incorrect
+        // Check OTP
         if (user.otp !== otp) {
-            return res.status(400).json({ message: 'Invalid OTP' });
+            let attempts = (user.otp_failed_attempts || 0) + 1;
+            const now = new Date();
+
+            if (attempts >= MAX_ATTEMPTS) {
+                const blockUntil = new Date(now.getTime() + BLOCK_DURATION_MINUTES * 60000);
+                let newStatus = 'blocked';
+
+                // Check for second-time block
+                if (user.otp_verification_status === 'blocked') {
+                    newStatus = 'rejected';
+                }
+
+                await db.query(`UPDATE ${table} SET otp_failed_attempts = ?, otp_block_until = ?, otp_verification_status = ? WHERE ${idColumn} = ?`, [
+                    attempts, blockUntil, newStatus, userID
+                ]);
+
+                // Email alert
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: originalEmail,
+                    subject: `⚠️ OTP Verification Blocked for ${table}`,
+                    text: `Your account (${userID}) is temporarily blocked due to 5 incorrect OTP attempts. Please wait 30 minutes or contact support.`
+                });
+
+                return res.status(403).json({ message: 'Too many failed attempts. Account blocked for 30 minutes.' });
+            } else {
+                await db.query(`UPDATE ${table} SET otp_failed_attempts = ? WHERE ${idColumn} = ?`, [attempts, userID]);
+                return res.status(400).json({ message: `Invalid OTP. Attempt ${attempts}/${MAX_ATTEMPTS}` });
+            }
         }
 
-        // ✅ Mark user as verified
-        const updateQuery = `UPDATE ${table} SET isVerified = 0 WHERE ${idColumn} = ?`;
-        await db.query(updateQuery, [userID]);
+        // Successful OTP verification
+        await db.query(`UPDATE ${table} SET otp_failed_attempts = 0, otp_block_until = NULL, otp_verification_status = 'active' WHERE ${idColumn} = ?`, [userID]);
 
         console.log("✅ OTP verified successfully for", table, "UserID:", userID);
         res.status(200).json({ success: true, message: 'OTP verified successfully.', id: userID });

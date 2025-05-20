@@ -105,11 +105,12 @@ const createCustomer = async (req, res) => {
         // Insert into DB
         const insertQuery = role === "Admin"
             ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry, photo, nid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo, nid, isVerified, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo, nid, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const insertParams = role === "Admin"
             ? [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, nid]
-            : [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, finalNID, 0, 'Pending'];
+            : [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, finalNID, 'Pending'];
+        
 
         await connection.execute(insertQuery, insertParams);
         console.log(`✅ Inserted user with ID: ${userID}`);

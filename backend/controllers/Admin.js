@@ -7,7 +7,7 @@ const db = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'OVS',
+    database: 'online_voting_system',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
