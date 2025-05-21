@@ -84,6 +84,46 @@
             box-sizing: border-box;
         }
 
+        /* Improved styles for candidate selection */
+        .candidate-option {
+            transition: all 0.3s ease;
+        }
+
+        /* Style for selected candidate */
+        .candidate-selected {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Selected candidate photo highlight */
+        .candidate-selected img {
+            border-color: #3b82f6 !important;
+        }
+
+        /* Improved checkmark */
+        .checkmark {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .candidate-selected .checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 display: none;
@@ -155,130 +195,185 @@
 
     <script>
         // This script fixes the candidate loading issue
-            const voterID = localStorage.getItem("userID");
-            let currentElectionID = null;
+        const voterID = localStorage.getItem("userID");
+        let currentElectionID = null;
 
-            if (!voterID) {
-                alert("Voter ID not found. Please log in again.");
-                window.location.href = "/login"; // redirect if voter ID is missing
+        if (!voterID) {
+            alert("Voter ID not found. Please log in again.");
+            window.location.href = "/login"; // redirect if voter ID is missing
+        }
+
+        // Check if voter is verified before loading the voting page
+        document.addEventListener("DOMContentLoaded", function () {
+            const voterStatus = localStorage.getItem("status");
+
+            if (voterStatus === "Pending" || voterStatus === "Rejected" || !voterStatus) {
+                // Block access if not verified
+                window.location.href = "/verifyErrors";
+            } else {
+                // Allow access — no redirect
+                loadAvailableElections();
+                loadVotingHistory();
             }
+        });
 
-            // Check if voter is verified before loading the voting page
-            document.addEventListener("DOMContentLoaded", function () {
-                    const voterStatus = localStorage.getItem("status");
+        // Load available elections the user can vote in
+        async function loadAvailableElections() {
+            try {
+                const res = await fetch(`/api/vote/available-elections?voterID=${voterID}`);
+                const elections = await res.json();
+                const selectEl = document.getElementById("election-select");
 
-                    if (voterStatus === "Pending" || voterStatus === "Rejected" || !voterStatus) {
-                        // Block access if not verified
-                        window.location.href = "/verifyErrors";
-                    } else {
-                        // Allow access — no redirect
-                        loadAvailableElections();
-                        loadVotingHistory();
-                    }
+                // Clear any existing options except the default
+                selectEl.innerHTML = '<option value="" selected disabled>Choose an election to vote in</option>';
+
+                if (elections.length === 0) {
+                    selectEl.innerHTML += `<option value="" disabled>No available elections to vote in</option>`;
+                    document.getElementById("election-description").textContent = "You have voted in all current elections or there are no active elections at this time.";
+                    return;
+                }
+
+                elections.forEach(election => {
+                    // Make sure we're using the correct property names from the election_times table
+                    selectEl.innerHTML += `<option value="${election.id}">${election.name}</option>`;
                 });
 
+                document.getElementById("election-description").textContent = "Select an election to continue voting.";
 
+                // Add event listener
+                selectEl.addEventListener("change", electionSelected);
+            } catch (err) {
+                console.error("Failed to load available elections", err);
+                document.getElementById("election-description").textContent = "Error loading elections. Please try again later.";
+            }
+        }
 
+        // When user selects an election
+        async function electionSelected(e) {
+            const electionID = e.target.value;
+            currentElectionID = electionID;
 
-                // The rest of your existing voting page script goes here (unchanged)
+            if (!electionID) return;
 
+            // Update description
+            document.getElementById("election-description").textContent = "Loading election details...";
 
-            // Load available elections the user can vote in
-            async function loadAvailableElections() {
-                try {
-                    const res = await fetch(`/api/vote/available-elections?voterID=${voterID}`);
-                    const elections = await res.json();
-                    const selectEl = document.getElementById("election-select");
+            try {
+                // Load election time info
+                await fetchElectionTime(electionID);
 
-                    // Clear any existing options except the default
-                    selectEl.innerHTML = '<option value="" selected disabled>Choose an election to vote in</option>';
+                // Load candidates
+                await loadCandidates(electionID);
 
-                    if (elections.length === 0) {
-                        selectEl.innerHTML += `<option value="" disabled>No available elections to vote in</option>`;
-                        document.getElementById("election-description").textContent = "You have voted in all current elections or there are no active elections at this time.";
-                        return;
-                    }
+                // Show voting section
+                document.getElementById("countdown-section").classList.remove("hidden");
+                document.getElementById("vote-section").classList.remove("hidden");
 
-                    elections.forEach(election => {
-                        // Make sure we're using the correct property names from the election_times table
-                        selectEl.innerHTML += `<option value="${election.id}">${election.name}</option>`;
+                document.getElementById("election-description").textContent = `Election #${electionID} selected. Please choose your candidate below.`;
+            } catch (err) {
+                console.error("Error loading election details", err);
+                document.getElementById("election-description").textContent = "Error loading election details. Please try again.";
+            }
+        }
+
+        // Load candidates for selected election - IMPROVED FUNCTION
+        async function loadCandidates(electionID) {
+            try {
+                const res = await fetch(`/api/vote/candidates/${electionID}`);
+                console.log(`Fetching candidates from: /api/vote/candidates/${electionID}`);
+                const candidates = await res.json();
+                console.log("API Response:", candidates);
+                const list = document.getElementById("candidateList");
+                console.log(`Fetched ${candidates.length} candidates for election ID ${electionID}`);
+
+                if (candidates.length === 0) {
+                    list.innerHTML = '<p class="col-span-full text-center text-gray-500 py-6">No candidates found for this election.</p>';
+                    return;
+                }
+
+                // Improved candidate card template with better visual feedback
+                list.innerHTML = candidates.map(c => `
+<label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
+    <input type="radio" name="candidate" value="${c.id}" class="hidden" />
+    <div class="flex flex-col items-center text-center gap-4">
+        <img src="${c.photo || '/images/default-candidate.png'}" alt="${c.name}" 
+             onerror="this.onerror=null; this.src='/images/default-candidate.png';" 
+             class="w-24 h-24 object-cover rounded-full border-4 border-gray-300 transition-all duration-300" />
+        <div>
+            <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
+            <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
+            <p class="text-sm text-gray-600 italic">"${c.promises || 'No promises provided'}"</p>
+        </div>
+    </div>
+    <div class="checkmark">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+</label>
+`).join('');
+
+                // Improved selection handler for better visual feedback
+                document.querySelectorAll('input[name="candidate"]').forEach(input => {
+                    input.addEventListener('change', (e) => {
+                        // Remove selected class from all candidates
+                        document.querySelectorAll('.candidate-option').forEach(el => {
+                            el.classList.remove('candidate-selected');
+                        });
+
+                        // Add selected class to the chosen candidate
+                        const selectedLabel = e.target.closest('.candidate-option');
+                        selectedLabel.classList.add('candidate-selected');
+
+                        // Enable vote button
+                        document.getElementById("vote-btn").disabled = false;
                     });
+                });
 
-                    document.getElementById("election-description").textContent = "Select an election to continue voting.";
+                // Add click handler to the entire card, not just the radio button
+                document.querySelectorAll('.candidate-option').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const radio = card.querySelector('input[type="radio"]');
+                        radio.checked = true;
 
-                    // Add event listener
-                    selectEl.addEventListener("change", electionSelected);
-                } catch (err) {
-                    console.error("Failed to load available elections", err);
-                    document.getElementById("election-description").textContent = "Error loading elections. Please try again later.";
-                }
-            }
+                        // Trigger change event to update UI
+                        const event = new Event('change');
+                        radio.dispatchEvent(event);
+                    });
+                });
 
-            // When user selects an election
-            async function electionSelected(e) {
-                const electionID = e.target.value;
-                currentElectionID = electionID;
+            } catch (err) {
+                console.error("Failed to load candidates", err);
 
-                if (!electionID) return;
-
-                // Update description
-                document.getElementById("election-description").textContent = "Loading election details...";
-
+                // Try an alternative API endpoint format as fallback
                 try {
-                    // Load election time info
-                    await fetchElectionTime(electionID);
+                    console.log("Trying fallback endpoint with query parameter");
+                    const fallbackRes = await fetch(`/api/vote/candidates?electionID=${electionID}`);
+                    const fallbackCandidates = await fallbackRes.json();
 
-                    // Load candidates - FIXED HERE: using electionID parameter
-                    await loadCandidates(electionID);
-
-                    // Show voting section
-                    document.getElementById("countdown-section").classList.remove("hidden");
-                    document.getElementById("vote-section").classList.remove("hidden");
-
-                    document.getElementById("election-description").textContent = `Election #${electionID} selected. Please choose your candidate below.`;
-                } catch (err) {
-                    console.error("Error loading election details", err);
-                    document.getElementById("election-description").textContent = "Error loading election details. Please try again.";
-                }
-            }
-
-            // Load candidates for selected election - FIXED FUNCTION
-            async function loadCandidates(electionID) {
-                try {
-                    // FIXED URL: Using correct API path based on router configuration
-                    const res = await fetch(`/api/vote/candidates/${electionID}`);
-
-                    // Log the request details for debugging
-                    console.log(`Fetching candidates from: /api/vote/candidates/${electionID}`);
-
-                    const candidates = await res.json();
-
-                    // Log the response
-                    console.log("API Response:", candidates);
+                    console.log("Fallback endpoint response:", fallbackCandidates);
                     const list = document.getElementById("candidateList");
 
-                    // For debugging
-                    console.log(`Fetched ${candidates.length} candidates for election ID ${electionID}`);
-
-                    if (candidates.length === 0) {
+                    if (fallbackCandidates.length === 0) {
                         list.innerHTML = '<p class="col-span-full text-center text-gray-500 py-6">No candidates found for this election.</p>';
                         return;
                     }
 
-                    list.innerHTML = candidates.map(c => `
+                    // Render candidates from fallback response with improved template
+                    list.innerHTML = fallbackCandidates.map(c => `
 <label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
-    <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
+    <input type="radio" name="candidate" value="${c.id}" class="hidden" />
     <div class="flex flex-col items-center text-center gap-4">
         <img src="${c.photo || '/images/default-candidate.png'}" alt="${c.name}" 
              onerror="this.onerror=null; this.src='/images/default-candidate.png';" 
-             class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
+             class="w-24 h-24 object-cover rounded-full border-4 border-gray-300 transition-all duration-300" />
         <div>
             <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
             <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
             <p class="text-sm text-gray-600 italic">"${c.promises || 'No promises provided'}"</p>
         </div>
     </div>
-    <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
+    <div class="checkmark">
         <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
         </svg>
@@ -286,155 +381,124 @@
 </label>
 `).join('');
 
+                    // Apply same improved selection handlers
                     document.querySelectorAll('input[name="candidate"]').forEach(input => {
-                        input.addEventListener('change', () => {
+                        input.addEventListener('change', (e) => {
+                            document.querySelectorAll('.candidate-option').forEach(el => {
+                                el.classList.remove('candidate-selected');
+                            });
+                            const selectedLabel = e.target.closest('.candidate-option');
+                            selectedLabel.classList.add('candidate-selected');
                             document.getElementById("vote-btn").disabled = false;
                         });
                     });
-                } catch (err) {
-                    console.error("Failed to load candidates", err);
 
-                    // Try an alternative API endpoint format as fallback
-                    try {
-                        console.log("Trying fallback endpoint with query parameter");
-                        const fallbackRes = await fetch(`/api/vote/candidates?electionID=${electionID}`);
-                        const fallbackCandidates = await fallbackRes.json();
-
-                        console.log("Fallback endpoint response:", fallbackCandidates);
-
-                        const list = document.getElementById("candidateList");
-
-                        if (fallbackCandidates.length === 0) {
-                            list.innerHTML = '<p class="col-span-full text-center text-gray-500 py-6">No candidates found for this election.</p>';
-                            return;
-                        }
-
-                        // Render candidates from fallback response
-                        list.innerHTML = fallbackCandidates.map(c => `
-<label class="block bg-gray-50 hover:bg-blue-50 transition rounded-xl border border-gray-200 p-4 cursor-pointer shadow-sm hover:shadow-md relative candidate-option">
-    <input type="radio" name="candidate" value="${c.id}" class="hidden peer" />
-    <div class="flex flex-col items-center text-center gap-4">
-        <img src="${c.photo || '/images/default-candidate.png'}" alt="${c.name}" 
-             onerror="this.onerror=null; this.src='/images/default-candidate.png';" 
-             class="w-24 h-24 object-cover rounded-full border-4 border-blue-600 peer-checked:border-blue-700 transition" />
-        <div>
-            <h4 class="text-lg font-semibold text-gray-800">${c.name}</h4>
-            <p class="text-sm text-gray-500 mb-2">(${c.party})</p>
-            <p class="text-sm text-gray-600 italic">"${c.promises || 'No promises provided'}"</p>
-        </div>
-    </div>
-    <div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full hidden peer-checked:block">
-        <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-4 h-4 m-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-        </svg>
-    </div>
-</label>
-`).join('');
-
-                        document.querySelectorAll('input[name="candidate"]').forEach(input => {
-                            input.addEventListener('change', () => {
-                                document.getElementById("vote-btn").disabled = false;
-                            });
+                    document.querySelectorAll('.candidate-option').forEach(card => {
+                        card.addEventListener('click', (e) => {
+                            const radio = card.querySelector('input[type="radio"]');
+                            radio.checked = true;
+                            const event = new Event('change');
+                            radio.dispatchEvent(event);
                         });
+                    });
 
-                        return; // Exit if fallback worked
+                    return; // Exit if fallback worked
 
-                    } catch (fallbackErr) {
-                        console.error("Fallback endpoint also failed:", fallbackErr);
-                        document.getElementById("candidateList").innerHTML =
-                            '<p class="col-span-full text-center text-red-500 py-6">Failed to load candidates. Please try again later.</p>';
-                    }
+                } catch (fallbackErr) {
+                    console.error("Fallback endpoint also failed:", fallbackErr);
+                    document.getElementById("candidateList").innerHTML =
+                        '<p class="col-span-full text-center text-red-500 py-6">Failed to load candidates. Please try again later.</p>';
                 }
             }
+        }
 
-            // Cast vote
-                document.getElementById("vote-btn").addEventListener("click", async () => {
-                    const loader = document.createElement("div");
-                    loader.id = "vote-loader";
-                    loader.innerHTML = "⏳ Processing your vote...";
-                    loader.classList.add("text-blue-700", "font-semibold", "mt-4");
-                    document.getElementById("vote-section").appendChild(loader);
+        // Cast vote
+        document.getElementById("vote-btn").addEventListener("click", async () => {
+            const loader = document.createElement("div");
+            loader.id = "vote-loader";
+            loader.innerHTML = "⏳ Processing your vote...";
+            loader.classList.add("text-blue-700", "font-semibold", "mt-4", "text-center");
+            document.getElementById("vote-section").appendChild(loader);
 
-                    const selected = document.querySelector('input[name="candidate"]:checked');
-                    if (!selected) {
-                        alert("Please select a candidate");
-                        loader.remove();
-                        return;
-                    }
+            const selected = document.querySelector('input[name="candidate"]:checked');
+            if (!selected) {
+                alert("Please select a candidate");
+                loader.remove();
+                return;
+            }
 
-                    if (!currentElectionID) {
-                        alert("Please select an election");
-                        loader.remove();
-                        return;
-                    }
+            if (!currentElectionID) {
+                alert("Please select an election");
+                loader.remove();
+                return;
+            }
 
-                    try {
-                        const res = await fetch("/api/vote/cast-vote", {
-                            method: "POST",
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                voterID,
-                                candidateID: selected.value,
-                                electionID: currentElectionID
-                            })
-                        });
+            try {
+                const res = await fetch("/api/vote/cast-vote", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        voterID,
+                        candidateID: selected.value,
+                        electionID: currentElectionID
+                    })
+                });
 
-                        const data = await res.json();
+                const data = await res.json();
 
-                        // Remove loader
-                        loader.remove();
+                // Remove loader
+                loader.remove();
 
-                        if (!res.ok) {
-                            alert(data.message || "Something went wrong.");
+                if (!res.ok) {
+                    alert(data.message || "Something went wrong.");
 
-                            // If vote already cast, hide vote section and update UI
-                            if (data.message && data.message.includes("already voted")) {
-                                document.getElementById("vote-section").classList.add("hidden");
-                                document.getElementById("countdown-section").classList.add("hidden");
-
-                                loadAvailableElections();
-                                loadVotingHistory();
-
-                                document.getElementById("election-select").value = "";
-                                document.getElementById("election-description").textContent = "You have already voted in this election.";
-                            }
-
-                            return;
-                        }
-
-                        alert(data.message || "Vote submitted successfully!");
-                        document.getElementById("vote-btn").disabled = true;
-
-                        // Update UI after successful vote
-                        document.getElementById("countdown-section").classList.add("hidden");
+                    // If vote already cast, hide vote section and update UI
+                    if (data.message && data.message.includes("already voted")) {
                         document.getElementById("vote-section").classList.add("hidden");
+                        document.getElementById("countdown-section").classList.add("hidden");
 
                         loadAvailableElections();
                         loadVotingHistory();
 
                         document.getElementById("election-select").value = "";
-                        document.getElementById("election-description").textContent = "Select another election to continue voting.";
-                    } catch (err) {
-                        loader.remove();
-                        console.error("Vote submission failed", err);
-                        alert("Something went wrong while submitting your vote.");
-                    }
-                });
-
-
-            // Load user's voting history
-            async function loadVotingHistory() {
-                try {
-                    const res = await fetch(`/api/vote/voter-history?voterID=${voterID}`);
-                    const history = await res.json();
-                    const historyEl = document.getElementById("voting-history-list");
-
-                    if (history.length === 0) {
-                        historyEl.innerHTML = `<p class="text-gray-500 py-4">You haven't voted in any elections yet.</p>`;
-                        return;
+                        document.getElementById("election-description").textContent = "You have already voted in this election.";
                     }
 
-                    historyEl.innerHTML = history.map(vote => `
+                    return;
+                }
+
+                alert(data.message || "Vote submitted successfully!");
+                document.getElementById("vote-btn").disabled = true;
+
+                // Update UI after successful vote
+                document.getElementById("countdown-section").classList.add("hidden");
+                document.getElementById("vote-section").classList.add("hidden");
+
+                loadAvailableElections();
+                loadVotingHistory();
+
+                document.getElementById("election-select").value = "";
+                document.getElementById("election-description").textContent = "Select another election to continue voting.";
+            } catch (err) {
+                loader.remove();
+                console.error("Vote submission failed", err);
+                alert("Something went wrong while submitting your vote.");
+            }
+        });
+
+        // Load user's voting history
+        async function loadVotingHistory() {
+            try {
+                const res = await fetch(`/api/vote/voter-history?voterID=${voterID}`);
+                const history = await res.json();
+                const historyEl = document.getElementById("voting-history-list");
+
+                if (history.length === 0) {
+                    historyEl.innerHTML = `<p class="text-gray-500 py-4">You haven't voted in any elections yet.</p>`;
+                    return;
+                }
+
+                historyEl.innerHTML = history.map(vote => `
             <div class="py-4">
                 <div class="flex justify-between items-center">
                     <div>
@@ -445,69 +509,69 @@
                 </div>
             </div>
         `).join('');
-                } catch (err) {
-                    console.error("Failed to load voting history", err);
-                    document.getElementById("voting-history-list").innerHTML =
-                        `<p class="text-red-500 py-4">Failed to load voting history. Please try again later.</p>`;
+            } catch (err) {
+                console.error("Failed to load voting history", err);
+                document.getElementById("voting-history-list").innerHTML =
+                    `<p class="text-red-500 py-4">Failed to load voting history. Please try again later.</p>`;
+            }
+        }
+
+        // Fetch and store election time for the selected election
+        async function fetchElectionTime(electionID) {
+            try {
+                const res = await fetch(`/api/vote/election-time?electionID=${electionID}`);
+                const { start_time, end_time } = await res.json();
+
+                // Store election times
+                localStorage.setItem(`election_${electionID}_start_time`, start_time);
+                localStorage.setItem(`election_${electionID}_end_time`, end_time);
+
+                updateCountdown(start_time, end_time);
+            } catch (err) {
+                console.error("Failed to fetch election time", err);
+            }
+        }
+
+        // Update countdown for the current election
+        function updateCountdown(startTime, endTime) {
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const countdownEl = document.getElementById("countdown");
+
+            if (!countdownEl) return;
+
+            function updateTimer() {
+                const now = new Date();
+                let diff = end - now;
+
+                if (now < start) {
+                    countdownEl.innerText = "Election hasn't started yet.";
+                    return;
                 }
+
+                if (diff <= 0) {
+                    countdownEl.innerText = "Election has ended.";
+                    return;
+                }
+
+                const hours = Math.floor(diff / 1000 / 60 / 60);
+                const minutes = Math.floor((diff / 1000 / 60) % 60);
+                const seconds = Math.floor((diff / 1000) % 60);
+
+                countdownEl.innerText = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
             }
 
-            // Fetch and store election time for the selected election
-            async function fetchElectionTime(electionID) {
-                try {
-                    const res = await fetch(`/api/vote/election-time?electionID=${electionID}`);
-                    const { start_time, end_time } = await res.json();
-
-                    // Store election times
-                    localStorage.setItem(`election_${electionID}_start_time`, start_time);
-                    localStorage.setItem(`election_${electionID}_end_time`, end_time);
-
-                    updateCountdown(start_time, end_time);
-                } catch (err) {
-                    console.error("Failed to fetch election time", err);
-                }
+            updateTimer();
+            // Clear existing interval if any
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
             }
+            window.countdownInterval = setInterval(updateTimer, 1000);
+        }
 
-            // Update countdown for the current election
-            function updateCountdown(startTime, endTime) {
-                const start = new Date(startTime);
-                const end = new Date(endTime);
-                const countdownEl = document.getElementById("countdown");
-
-                if (!countdownEl) return;
-
-                function updateTimer() {
-                    const now = new Date();
-                    let diff = end - now;
-
-                    if (now < start) {
-                        countdownEl.innerText = "Election hasn't started yet.";
-                        return;
-                    }
-
-                    if (diff <= 0) {
-                        countdownEl.innerText = "Election has ended.";
-                        return;
-                    }
-
-                    const hours = Math.floor(diff / 1000 / 60 / 60);
-                    const minutes = Math.floor((diff / 1000 / 60) % 60);
-                    const seconds = Math.floor((diff / 1000) % 60);
-
-                    countdownEl.innerText = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
-                }
-
-                updateTimer();
-                // Clear existing interval if any
-                if (window.countdownInterval) {
-                    clearInterval(window.countdownInterval);
-                }
-                window.countdownInterval = setInterval(updateTimer, 1000);
-            }
-
-            // Initial load
-            loadAvailableElections();
-            loadVotingHistory();
+        // Initial load
+        loadAvailableElections();
+        loadVotingHistory();
     </script>
 </body>
 

@@ -39,8 +39,9 @@
         <button type="button" id="verify-btn" class="verify-btn">Verify Code</button>
 
         <div class="resend-otp">
-            <p>Didn't receive the code? <button type="button" id="resend-btn" class="resend-btn" disabled>Resend
-                    Code</button></p>
+            <p>Didn't receive the code?
+                <button type="button" id="resend-btn" class="resend-btn">Resend Code</button>
+            </p>
         </div>
     </div>
 
@@ -161,63 +162,48 @@
             }
         }
 
-        // Bind the click event once DOM is ready
-            document.addEventListener('DOMContentLoaded', () => {
-                const resendButton = document.getElementById('resend-btn');
-                if (resendButton) {
-                    resendButton.addEventListener('click', resendOTP);
-                }
-            });
+        document.getElementById('resend-btn').addEventListener('click', resendOTP);
+        async function resendOTP() {
+            const userID = localStorage.getItem('userID');
+            const email = localStorage.getItem('userEmail');
 
-            async function resendOTP() {
-                const userID = localStorage.getItem('userID');
-                const email = localStorage.getItem('userEmail');
-                const resendButton = document.getElementById('resend-btn');
-
-                if (!userID || !email) {
-                    alert("User ID or Email missing. Please register again.");
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                // Disable button and change text
-                resendButton.disabled = true;
-                resendButton.textContent = "Sending...";
-
-                console.log("🔄 Resending OTP request:", { userID, email });
-
-                try {
-                    const response = await fetch('/api/resend-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userID, email })
-                    });
-
-                    const data = await response.json();
-                    console.log("✅ Server Response (Resend OTP):", data);
-
-                    if (data.success) {
-                        // Clear and refocus OTP inputs
-                        const otpInputs = document.querySelectorAll('.otp-input');
-                        otpInputs.forEach(input => input.value = '');
-                        otpInputs[0]?.focus();
-
-                        resetTimer(); // Assuming resetTimer() is defined elsewhere
-
-                        alert("OTP resent to your email address");
-                    } else {
-                        alert(data.message || "Failed to resend OTP");
-                    }
-
-                } catch (error) {
-                    alert('Error: Unable to connect to the server');
-                    console.error('❌ Resend OTP Error:', error);
-                } finally {
-                    resendButton.disabled = false;
-                    resendButton.textContent = "Resend Code";
-                }
+            if (!userID || !email) {
+                alert("User ID or Email missing. Please register again.");
+                window.location.href = 'index.html';
+                return;
             }
 
+            const resendButton = document.getElementById('resend-btn');
+            resendButton.textContent = "Sending...";
+
+            console.log("🔄 Resending OTP request:", { userID, email });
+
+            try {
+                const response = await fetch('/api/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userID, email })
+                });
+
+                const data = await response.json();
+                console.log("✅ Server Response (Resend OTP):", data);
+
+                if (data.success) {
+                    otpInputs.forEach(input => input.value = '');
+                    otpInputs[0].focus();
+                    resetTimer();
+                    alert("OTP resent to your email address");
+                    resendButton.textContent = "Resend Code";
+                } else {
+                    resendButton.textContent = "Resend Code";
+                    alert(data.message || "Failed to resend OTP");
+                }
+            } catch (error) {
+                resendButton.textContent = "Resend Code";
+                alert('Error: Unable to connect to the API');
+                console.error('❌ Error:', error);
+            }
+        }
     </script>
 
 

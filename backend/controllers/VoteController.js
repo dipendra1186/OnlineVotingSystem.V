@@ -172,6 +172,16 @@ exports.castVote = async (req, res) => {
     const parsedElectionID = parseInt(electionID, 10);
     const parsedCandidateID = parseInt(candidateID, 10);
 
+    // Create a unique lock name that includes voter and election ID
+    const lockName = `vote_lock_${voterID}_${parsedElectionID}`;
+    
+    // Create a global lock name for the election to prevent simultaneous processing
+    const globalElectionLock = `global_election_lock_${parsedElectionID}`;
+    
+    let connection = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
     try {
         // Step 1: Check if voter exists and their status
         const [voterResult] = await db.execute(
@@ -221,78 +231,219 @@ exports.castVote = async (req, res) => {
             });
         }
 
-        // Add a 3-second wait to simulate processing animation
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Step 4: Check if already voted outside of transaction (quick check)
+        const [alreadyVotedCheck] = await db.execute(
+            "SELECT * FROM votes_log WHERE voterID = ? AND electionID = ?",
+            [voterID, parsedElectionID]
+        );
 
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
-
-            // Lock the voter row to prevent concurrent voting
-            const [voterLock] = await connection.execute(
-                "SELECT * FROM voters WHERE voterID = ? FOR UPDATE",
-                [voterID]
-            );
-
-            // Re-check if already voted within the same transaction
-            const [voteCheck] = await connection.execute(
-                "SELECT * FROM votes_log WHERE voterID = ? AND electionID = ?",
-                [voterID, parsedElectionID]
-            );
-
-            if (voteCheck.length > 0) {
-                await connection.rollback();
-                connection.release();
-                return res.status(400).json({
-                    message: "You have already voted in this election."
-                });
-            }
-
-            // Create a consistent timestamp
-            const voteTimestamp = new Date();
-
-            // Log the vote using the same timestamp
-            await connection.execute(
-                "INSERT INTO votes_log (voterID, candidateID, electionID, vote_time) VALUES (?, ?, ?, ?)",
-                [voterID, parsedCandidateID, parsedElectionID, voteTimestamp]
-            );
-            
-
-            // Increment the candidate's vote count
-            await connection.execute(
-                "UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?",
-                [parsedCandidateID]
-            );
-
-            await connection.commit();
-            connection.release();
-
-            // Hash the voter ID for blockchain
-            const hashedVoterID = crypto.createHash("sha256").update(voterID).digest("hex");
-
-            // Add block to blockchain with the same timestamp
-            const result = await blockchain.addBlock({
-                voter: hashedVoterID,
-                candidate: parsedCandidateID,
-                election: parsedElectionID,
-                timestamp: voteTimestamp
+        if (alreadyVotedCheck.length > 0) {
+            return res.status(400).json({
+                message: "You have already voted in this election."
             });
-
-            return res.status(200).json({
-                message: "Your vote has been cast successfully!",
-                block: result
-            });
-
-        } catch (err) {
-            await connection.rollback();
-            connection.release();
-            throw err;
         }
 
+        // Add a shorter wait to simulate processing animation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Step 5: Process the vote with retries for deadlock situations
+        const processVote = async () => {
+            // Release any existing connection before creating a new one
+            if (connection) {
+                try {
+                    await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                    await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                    await connection.rollback();
+                } catch (e) {
+                    console.error("Error releasing previous connection:", e);
+                }
+                connection.release();
+            }
+
+            connection = await db.getConnection();
+            
+            try {
+                // Set transaction isolation level
+                await connection.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+                await connection.beginTransaction();
+                
+                // Try to acquire locks - first the global election lock, then the voter-specific lock
+                const [globalLockResult] = await connection.execute(
+                    "SELECT GET_LOCK(?, 5) as lock_acquired",
+                    [globalElectionLock]
+                );
+                
+                if (!globalLockResult[0].lock_acquired) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(409).json({
+                        message: "System busy processing votes. Please try again in a moment."
+                    });
+                }
+                
+                const [lockResult] = await connection.execute(
+                    "SELECT GET_LOCK(?, 5) as lock_acquired",
+                    [lockName]
+                );
+                
+                if (!lockResult[0].lock_acquired) {
+                    await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(409).json({
+                        message: "Another vote is being processed for you. Please try again in a moment."
+                    });
+                }
+                
+                // Double-check vote status within transaction
+                const [voteCheck] = await connection.execute(
+                    "SELECT * FROM votes_log WHERE voterID = ? AND electionID = ?",
+                    [voterID, parsedElectionID]
+                );
+                
+                if (voteCheck.length > 0) {
+                    await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                    await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(400).json({
+                        message: "You have already voted in this election."
+                    });
+                }
+                
+                // Create a precise timestamp
+                const voteTimestamp = new Date();
+                
+                // Hash the voter ID for blockchain
+                const hashedVoterElectionID = crypto.createHash("sha256")
+                    .update(`${voterID}-${parsedElectionID}`)
+                    .digest("hex");
+                
+                // Prepare blockchain data
+                const blockchainData = {
+                    voter: hashedVoterElectionID,
+                    candidate: parsedCandidateID,
+                    election: parsedElectionID,
+                    timestamp: voteTimestamp
+                };
+                
+                // FIRST: Record the vote in the database BEFORE adding to blockchain
+                // This change is crucial to fix the race condition
+                try {
+                    // Insert into votes_log first
+                    await connection.execute(
+                        "INSERT INTO votes_log (voterID, candidateID, electionID, vote_time) VALUES (?, ?, ?, ?)",
+                        [voterID, parsedCandidateID, parsedElectionID, voteTimestamp]
+                    );
+                    
+                    // Update candidate vote count 
+                    await connection.execute(
+                        "UPDATE candidates SET vote_count = vote_count + 1 WHERE id = ?",
+                        [parsedCandidateID]
+                    );
+                    
+                    // Commit the database transaction immediately
+                    await connection.commit();
+                    
+                    // THEN: Try blockchain addition (outside of the DB transaction)
+                    try {
+                        const blockResult = await blockchain.addBlock(blockchainData);
+                        
+                        // Release locks
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                        connection.release();
+                        connection = null;
+                        
+                        return res.status(200).json({
+                            message: "Your vote has been cast successfully!",
+                            block: blockResult,
+                            vote_time: voteTimestamp.toISOString()
+                        });
+                    } catch (blockchainError) {
+                        console.error("Blockchain error after DB commit:", blockchainError);
+                        // Even if blockchain fails, the vote is recorded in DB, so we consider it successful
+                        // but log the error for investigation
+                        
+                        // Release locks
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                        connection.release();
+                        connection = null;
+                        
+                        return res.status(200).json({
+                            message: "Your vote has been cast successfully!",
+                            vote_time: voteTimestamp.toISOString(),
+                            note: "Vote recorded in primary database. Blockchain sync will be completed soon."
+                        });
+                    }
+                } catch (dbError) {
+                    // If DB operation fails, roll back and release locks
+                    if (connection) {
+                        await connection.rollback();
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                        connection.release();
+                        connection = null;
+                    }
+                    
+                    // Handle deadlock with retry
+                    if (dbError.code === 'ER_LOCK_DEADLOCK' && retryCount < MAX_RETRIES) {
+                        console.log(`DB Deadlock detected, retrying (${retryCount + 1}/${MAX_RETRIES})`);
+                        retryCount++;
+                        // Add small random delay before retry
+                        const delay = 500 + Math.floor(Math.random() * 1000);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return processVote(); // Recursive retry
+                    }
+                    
+                    throw dbError;
+                }
+            } catch (txnError) {
+                // Clean up on error
+                if (connection) {
+                    try {
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                        await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                        await connection.rollback();
+                    } catch (e) {
+                        console.error("Error in rollback:", e);
+                    }
+                    connection.release();
+                    connection = null;
+                }
+                
+                throw txnError;
+            }
+        };
+        
+        // Start the voting process with retry capability
+        return await processVote();
+        
     } catch (err) {
         console.error("Error casting vote:", err);
+        
+        // Clean up if needed
+        if (connection) {
+            try {
+                await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+                await connection.execute("SELECT RELEASE_LOCK(?)", [globalElectionLock]);
+                await connection.rollback();
+                connection.release();
+            } catch (cleanupErr) {
+                console.error("Error during cleanup:", cleanupErr);
+            }
+        }
+        
+        // Provide appropriate error message
+        if (err.message && err.message.includes("already voted")) {
+            return res.status(400).json({
+                message: "You have already voted in this election."
+            });
+        }
+        
         return res.status(500).json({
-            message: err.message || "Something went wrong while casting your vote."
+            message: "An error occurred while processing your vote. Please try again."
         });
     }
 };
@@ -321,4 +472,3 @@ exports.getElectionResults = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-

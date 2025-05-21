@@ -21,7 +21,7 @@ const getUserProfile = async (req, res) => {
     try {
         // Try Voter table
         let [voters] = await db.query(
-            'SELECT voterID AS id, fullName AS name, email, isVerified, photo FROM voters WHERE voterID = ?',
+            'SELECT voterID AS id, fullName AS name, email, photo FROM voters WHERE voterID = ?',
             [userID]
         );
 
@@ -43,8 +43,7 @@ const getUserProfile = async (req, res) => {
                 gender, 
                 email, 
                 adminID, 
-                createdAt,
-                isVerified 
+                createdAt 
             FROM admins 
             WHERE adminID = ?`, 
             [userID]

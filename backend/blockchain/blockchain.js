@@ -21,6 +21,7 @@ class Block {
 class Blockchain {
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.initialized = false;
     }
 
     createGenesisBlock() {
@@ -34,43 +35,92 @@ class Blockchain {
         return this.chain[this.chain.length - 1];
     }
 
+
+    async hasVoted(hashedVoterElectionID) {
+        try {
+            // Use transaction to prevent race conditions
+            const connection = await db.getConnection();
+            try {
+                await connection.beginTransaction();
+                
+                const [rows] = await connection.execute(
+                    "SELECT * FROM blockchain WHERE JSON_EXTRACT(data, '$.voter') = ?",
+                    [hashedVoterElectionID]
+                );
+                
+                await connection.commit();
+                connection.release();
+                
+                return rows.length > 0;
+            } catch (err) {
+                if (connection) {
+                    await connection.rollback();
+                    connection.release();
+                }
+                throw err;
+            }
+        } catch (err) {
+            console.error("Error checking if voter has already voted:", err);
+            throw err;
+        }
+    }
+
     async addBlock(newData) {
-        // Extract hashed voterID
-        const hashedVoterID = newData.voter;
-
-        // ✅ Check for duplicate vote in the DB
-        const [rows] = await db.execute(
-            "SELECT * FROM blockchain WHERE JSON_EXTRACT(data, '$.voter') = ?",
-            [hashedVoterID]
-        );
-
-        if (rows.length > 0) {
-            // 🛑 Instead of throwing, return a rejected Promise to handle it in controller
-            throw new Error("You have already voted.");
+        if (!this.initialized) {
+            await this.loadBlockchainFromDatabase();
+            this.initialized = true;
         }
 
-        const latestBlock = this.getLatestBlock();
-        const newBlock = new Block(
-            latestBlock.index + 1,
-            new Date().toISOString(),
-            newData,
-            latestBlock.hash
-        );
-
-        this.chain.push(newBlock);
-        await this.saveBlockToDatabase(newBlock);
-
-        return newBlock;
+        // Extract hashed voterID
+        const hashedVoterElectionID = newData.voter;
+        
+        try {
+            // Check for duplicate vote with proper transaction handling
+            const hasAlreadyVoted = await this.hasVoted(hashedVoterElectionID);
+            
+            if (hasAlreadyVoted) {
+                throw new Error("You have already voted.");
+            }
+            
+            const latestBlock = this.getLatestBlock();
+            const newBlock = new Block(
+                latestBlock.index + 1,
+                newData.timestamp || new Date().toISOString(),
+                newData,
+                latestBlock.hash
+            );
+            
+            // Save to database first, then add to memory chain only if DB operation succeeds
+            await this.saveBlockToDatabase(newBlock);
+            
+            // Now that DB operation succeeded, update memory
+            this.chain.push(newBlock);
+            
+            return newBlock;
+        } catch (err) {
+            console.error("Error in blockchain addBlock:", err);
+            throw err; // Re-throw to be handled by controller
+        }
     }
 
     async saveBlockToDatabase(block) {
         const { index, timestamp, data, previousHash, hash } = block;
         const query = `INSERT INTO blockchain (\`index\`, timestamp, data, previousHash, hash) VALUES (?, ?, ?, ?, ?)`;
 
+        // Use transaction for atomic operation
+        const connection = await db.getConnection();
         try {
-            await db.execute(query, [index, timestamp, JSON.stringify(data), previousHash, hash]);
+            await connection.beginTransaction();
+            await connection.execute(query, [index, timestamp, JSON.stringify(data), previousHash, hash]);
+            await connection.commit();
+            connection.release();
         } catch (err) {
+            if (connection) {
+                await connection.rollback();
+                connection.release();
+            }
             console.error("Error saving block to database:", err);
+            throw err;
         }
     }
 

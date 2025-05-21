@@ -19,9 +19,18 @@ exports.verifyVoter = async (req, res) => {
     try {
         // Update status only (remove isVerified logic)
         const [result] = await db.query(
-            `UPDATE voters SET status = 'Verified' WHERE voterID = ?`,
+            `UPDATE voters 
+             SET 
+               status = 'Verified',
+               rejected_at = NULL,
+               otp_failed_attempts = 0,
+               otp_block_until = 0,
+               otp_verification_status = 'active',
+               otp_failed_attempts_phase2 = 0
+             WHERE voterID = ?`,
             [voterID]
-        );
+          );
+          
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, message: "Voter not found" });
