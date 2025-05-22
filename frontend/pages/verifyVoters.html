@@ -173,10 +173,10 @@
             <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/Candidate">Manage Candidates</a></li>
             <li><a href="/countdown">Countdown</a></li>
-            <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
             <li><a href="/notification">Notification</a></li>  
+            <li><a href="/verifyVoters" class="active">Verify Voters</a></li>
         </ul>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
 
     <div class="main">
@@ -259,6 +259,33 @@
             alert(data.message);
             fetchPendingVoters();
         }
+
+        function logout() {
+                const confirmLogout = confirm("Are you sure you want to logout?");
+                if (!confirmLogout) return;
+
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, "", window.location.href);
+                        window.onpopstate = function () {
+                            window.history.pushState(null, "", window.location.href);
+                        };
+                    }
+
+                    window.location.href = "/login";
+                });
+            }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+            });
 
         window.onload = fetchPendingVoters;
     </script>

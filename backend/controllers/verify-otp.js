@@ -104,6 +104,7 @@ const verifyOTP = async (req, res) => {
                     await db.query(`
                         UPDATE voters
                         SET otp_verification_status = 'rejected', 
+                            status = 'Rejected',
                             rejected_at = ?, 
                             otp_failed_attempts_phase2 = ?
                         WHERE voterID = ?

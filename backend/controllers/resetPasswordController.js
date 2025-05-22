@@ -58,6 +58,16 @@ const resetPassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Password strength validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                message: 'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*).'
+            });
+        }
+
+
         await connection.execute(
             `UPDATE ${table} SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE ${idColumn} = ?`,
             [hashedPassword, ID]

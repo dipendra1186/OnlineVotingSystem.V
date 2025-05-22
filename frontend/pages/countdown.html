@@ -318,7 +318,7 @@
             <li><a href="/notification">Notification</a></li>
             <li><a href="/verifyVoters">Verify Voters</a></li>
         </ul>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
 
     <!-- Top Header with Profile Link -->
@@ -562,6 +562,33 @@
             return statusMap[status.toLowerCase()] || status;
         }
 
+        function logout() {
+                const confirmLogout = confirm("Are you sure you want to logout?");
+                if (!confirmLogout) return;
+
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, "", window.location.href);
+                        window.onpopstate = function () {
+                            window.history.pushState(null, "", window.location.href);
+                        };
+                    }
+
+                    window.location.href = "/login";
+                });
+            }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+            });
+
         function updateCountdown() {
             if (!startDate || !endDate) return;
 
@@ -599,6 +626,8 @@
             return `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
 
+        
+
         function showNotification(message, type = 'info') {
             const div = document.createElement('div');
             div.textContent = message;
@@ -622,6 +651,8 @@
             setTimeout(() => {
                 div.remove();
             }, 3000);
+
+            
         }
     </script>
 </body>

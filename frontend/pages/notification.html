@@ -422,37 +422,10 @@
             <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/Candidate">Manage Candidates</a></li>
             <li><a href="/countdown">Countdown</a></li>
-            <li><a href="/results">Results</a></li>
-            <li><a href="/verifyVoters">Verify Voters</a></li>
             <li><a href="/notifications" class="active">Notifications</a></li>
+            <li><a href="/verifyVoters">Verify Voters</a></li> 
         </ul>
-        <button class="logout-btn">Logout</button>
-    </div>
-
-    <!-- Toast notifications -->
-    <div id="toast" class="toast"></div>
-
-    <!-- Modal popup -->
-    <div id="confirmation-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Notification Added</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Your notification has been added successfully!</p>
-                <div class="toggle-container">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="auto-refresh-toggle" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Enable auto-refresh</span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn modal-btn-primary" onclick="handleModalConfirm()">OK</button>
-            </div>
-        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
 
     <!-- Main Content -->
@@ -786,6 +759,33 @@
                 showToast('Title and message cannot be empty', 'error');
             }
         }
+
+        function logout() {
+                const confirmLogout = confirm("Are you sure you want to logout?");
+                if (!confirmLogout) return;
+
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, "", window.location.href);
+                        window.onpopstate = function () {
+                            window.history.pushState(null, "", window.location.href);
+                        };
+                    }
+
+                    window.location.href = "/login";
+                });
+            }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+            });
 
         // Initialize on page load
         window.onload = function () {

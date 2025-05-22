@@ -1,4 +1,4 @@
-const db = require("../config/db"); // Import your DB connection pool only once
+const db = require("../config/db"); 
 
 
 // ✅ Create a new candidate with election_id
@@ -86,25 +86,57 @@ exports.getCandidateById = async (req, res) => {
 // ✅ Update a candidate
 exports.updateCandidate = async (req, res) => {
     const { id } = req.params;
-    const { name, party, age, qualification, promises, photo, election_id } = req.body;
-    
+    const { name, party, age, qualification, promises, election_id, photo } = req.body;
+
     try {
-        let sql, params;
-        
-        // Include election_id in update if provided
-        if (election_id !== undefined) {
-            sql = "UPDATE candidates SET name=?, party=?, age=?, qualification=?, promises=?, photo=?, election_id=? WHERE id=?";
-            params = [name, party, age, qualification, promises, photo, election_id, id];
-        } else {
-            sql = "UPDATE candidates SET name=?, party=?, age=?, qualification=?, promises=?, photo=? WHERE id=?";
-            params = [name, party, age, qualification, promises, photo, id];
+        // Validate required fields
+        if (!name || !party || !age || !qualification || !promises || !election_id) {
+            return res.status(400).json({ error: "All required fields must be provided" });
         }
+
+        // First, get the current candidate data
+        const [currentCandidate] = await db.execute(
+            'SELECT * FROM candidates WHERE id = ?', 
+            [id]
+        );
+
+        if (currentCandidate.length === 0) {
+            return res.status(404).json({ error: "Candidate not found" });
+        }
+
+        // Use existing photo if no new one provided
+        const photoUrl = photo || currentCandidate[0].photo;
+
+        const query = `
+            UPDATE candidates 
+            SET name = ?, party = ?, age = ?, qualification = ?, promises = ?, election_id = ?, photo = ?
+            WHERE id = ?
+        `;
         
-        await db.execute(sql, params);
-        res.status(200).json({ message: "Candidate updated successfully!" });
+        const params = [
+            name, 
+            party, 
+            parseInt(age, 10), 
+            qualification, 
+            promises, 
+            election_id, 
+            photoUrl, 
+            id
+        ];
+
+        console.log('Update query:', query);
+        console.log('Update params:', params);
+
+        const [result] = await db.execute(query, params);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Candidate not found" });
+        }
+
+        res.json({ message: "Candidate updated successfully", candidateId: id });
     } catch (error) {
         console.error("Error updating candidate:", error);
-        res.status(500).json({ error: "Database error" });
+        res.status(500).json({ error: "Database error: " + error.message });
     }
 };
 

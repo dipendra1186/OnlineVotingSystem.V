@@ -222,7 +222,7 @@
             </div>
 
             <div style="text-align: center; margin-top: 2rem;">
-                <button id="logout-btn" class="btn-danger">Logout</button>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
         </div>
     </div>
@@ -543,35 +543,33 @@
         });
 
         // Enhanced logout functionality
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            updateDebug("🚪 Logging out user...");
+        function logout() {
+                const confirmLogout = confirm("Are you sure you want to logout?");
+                if (!confirmLogout) return;
 
-            // Clear all standard localStorage keys
-            const keysToRemove = [
-                'userID', 'userEmail', 'role', 'token', 'user_id', 'userId',
-                'email', 'user_email', 'userRole', 'user_role'
-            ];
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
 
-            keysToRemove.forEach(key => {
-                if (localStorage.getItem(key)) {
-                    updateDebug(`Removing localStorage key: ${key}`);
-                    localStorage.removeItem(key);
-                }
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, "", window.location.href);
+                        window.onpopstate = function () {
+                            window.history.pushState(null, "", window.location.href);
+                        };
+                    }
+
+                    window.location.href = "/login";
+                });
+            }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('logoutBtn').addEventListener('click', logout);
             });
 
-            // Clear any other keys that might contain user data
-            const allKeys = Object.keys(localStorage);
-            allKeys.forEach(key => {
-                const value = localStorage.getItem(key);
-                if (value && (value.includes('@') || value.includes('V2025') || value.includes('A2025'))) {
-                    updateDebug(`Removing localStorage key with user data: ${key}`);
-                    localStorage.removeItem(key);
-                }
-            });
-
-            updateDebug("✅ Logout complete - redirecting to login");
-            window.location.href = '/login';
-        });
     </script>
 </body>
 

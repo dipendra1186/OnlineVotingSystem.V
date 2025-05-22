@@ -206,16 +206,16 @@
             <li><a href="/countdown">Countdown</a></li>
             <li><a href="/notification">Notification</a></li>
             <li><a href="/verifyVoters">Verify Voters</a></li>
-            
+
         </ul>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
 
     <!-- Main Content -->
     <div class="main-content scrollable-content">
         <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-lg">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Candidate Management</h2>
-    
+
             <!-- Election Selector -->
             <div class="mb-6 p-4 bg-blue-50 rounded-lg">
                 <div class="flex items-center justify-between">
@@ -228,7 +228,7 @@
                     </select>
                 </div>
             </div>
-    
+
             <!-- Add/Edit Candidate Form -->
             <form id="candidateForm" class="bg-gray-50 p-6 rounded-lg shadow-md" enctype="multipart/form-data">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -237,8 +237,8 @@
                     <input type="text" id="candidateParty" placeholder="Party Affiliation" class="p-3 border rounded-lg"
                         required>
                     <input type="number" id="candidateAge" placeholder="Age" class="p-3 border rounded-lg" required>
-                    <input type="text" id="candidateQualification" placeholder="Qualification" class="p-3 border rounded-lg"
-                        required>
+                    <input type="text" id="candidateQualification" placeholder="Qualification"
+                        class="p-3 border rounded-lg" required>
                     <input type="text" id="candidatePromises" placeholder="Promises if Elected"
                         class="p-3 border rounded-lg" required>
                     <div class="col-span-2">
@@ -251,7 +251,7 @@
                     class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Add
                     Candidate</button>
             </form>
-    
+
             <!-- Candidate List -->
             <div class="overflow-x-auto mt-6">
                 <table class="w-full bg-white border rounded-lg shadow-md">
@@ -274,13 +274,14 @@
             </div>
         </div>
     </div>
-    
+
 
     <script>
         let editMode = false;
         let editingCandidateId = null;
         let currentElectionId = null;
         let elections = [];
+        let candidates = []; // Store candidates globally
 
         function getrole() {
             return localStorage.getItem('role');
@@ -304,13 +305,23 @@
                 fetchCandidates();
             });
 
-            document.getElementById("newElectionForm").addEventListener("submit", createNewElection);
+            // Remove the newElectionForm event listener as it doesn't exist in the HTML
         });
 
         async function fetchElections() {
             try {
+                console.log("Fetching elections...");
                 const response = await fetch("/api/election_times");
+                console.log("Elections response status:", response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Elections fetch failed:", errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
                 elections = await response.json();
+                console.log("Elections fetched:", elections);
 
                 const selector = document.getElementById("electionSelector");
                 selector.innerHTML = "";
@@ -336,53 +347,7 @@
                 }
             } catch (error) {
                 console.error("Error fetching elections:", error);
-                alert("Failed to load elections. Please try again later.");
-            }
-        }
-
-        function openNewElectionModal() {
-            document.getElementById("newElectionModal").classList.remove("hidden");
-        }
-
-        function closeNewElectionModal() {
-            document.getElementById("newElectionModal").classList.add("hidden");
-            document.getElementById("newElectionForm").reset();
-        }
-
-        async function createNewElection(event) {
-            event.preventDefault();
-
-            const name = document.getElementById("electionName").value;
-            const startDate = document.getElementById("startDate").value;
-            const endDate = document.getElementById("endDate").value;
-
-            if (!name || !startDate || !endDate) {
-                alert("Please fill in all fields.");
-                return;
-            }
-
-            try {
-                const response = await fetch("/api/election_times", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        start_time: new Date(startDate).toISOString(),
-                        end_time: new Date(endDate).toISOString()
-                    })
-                });
-
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || "Failed to create election");
-
-                alert("Election created successfully!");
-                closeNewElectionModal();
-                fetchElections();
-            } catch (error) {
-                console.error("Error creating election:", error);
-                alert("Error: " + error.message);
+                alert(`Failed to load elections: ${error.message}`);
             }
         }
 
@@ -493,9 +458,20 @@
             if (!currentElectionId) return;
 
             try {
+                console.log("Fetching candidates for election:", currentElectionId);
                 // Fetch candidates filtered by election_id
                 const res = await fetch(`/api/candidates?election_id=${currentElectionId}`);
-                const candidates = await res.json();
+                console.log("Candidates response status:", res.status);
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Candidates fetch failed:", errorText);
+                    throw new Error(`HTTP ${res.status}: ${errorText}`);
+                }
+
+                candidates = await res.json(); // Store candidates globally
+                console.log("Candidates fetched:", candidates);
+
                 const candidateList = document.getElementById("candidateList");
                 candidateList.innerHTML = "";
 
@@ -504,7 +480,7 @@
                     return;
                 }
 
-                candidates.forEach(c => {
+                candidates.forEach((c, index) => {
                     // Find election name
                     const election = elections.find(e => e.id == c.election_id) || { name: 'Unknown' };
 
@@ -518,17 +494,19 @@
                         <td class='p-4 border'>${c.promises}</td>
                         <td class='p-4 border'>${election.name}</td>
                         <td class='p-4 border'>
-                            <button class='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded mr-2' onclick='editCandidate(${JSON.stringify(c).replace(/"/g, "'")}'>Edit</button>
+                            <button class='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded mr-2' onclick='editCandidate(${index})'>Edit</button>
                             <button class='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded' onclick='deleteCandidate(${c.id})'>Delete</button>
                         </td>
                     </tr>`;
                 });
             } catch (error) {
                 console.error("Fetch error:", error);
+                alert(`Error loading candidates: ${error.message}`);
             }
         }
 
-        function editCandidate(candidate) {
+        function editCandidate(candidateIndex) {
+            const candidate = candidates[candidateIndex];
             editMode = true;
             editingCandidateId = candidate.id;
 
@@ -546,21 +524,32 @@
             preview.src = candidate.photo;
             preview.classList.remove("hidden");
 
+            // Make photo upload optional in edit mode
+            document.getElementById("candidatePhoto").required = false;
+
             document.querySelector("button[type='submit']").textContent = "Update Candidate";
         }
 
         async function deleteCandidate(id) {
             if (!confirm("Are you sure you want to delete this candidate?")) return;
             try {
+                console.log("Deleting candidate:", id);
                 const res = await fetch(`/api/candidates/${id}`, {
                     method: "DELETE"
                 });
-                if (!res.ok) throw new Error("Failed to delete candidate.");
+                console.log("Delete response status:", res.status);
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Delete failed:", errorText);
+                    throw new Error(`HTTP ${res.status}: ${errorText}`);
+                }
+
                 alert("Candidate deleted!");
                 fetchCandidates();
             } catch (error) {
                 console.error("Delete error:", error);
-                alert("Error deleting candidate.");
+                alert(`Error deleting candidate: ${error.message}`);
             }
         }
 
@@ -568,9 +557,37 @@
             document.getElementById("candidateForm").reset();
             document.getElementById("photoPreview").classList.add("hidden");
             document.querySelector("button[type='submit']").textContent = "Add Candidate";
+            document.getElementById("candidatePhoto").required = true;
             editMode = false;
             editingCandidateId = null;
         }
+
+        function logout() {
+            const confirmLogout = confirm("Are you sure you want to logout?");
+            if (!confirmLogout) return;
+
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).finally(() => {
+                localStorage.clear();
+                sessionStorage.clear();
+
+                if (window.history && window.history.pushState) {
+                    window.history.pushState(null, "", window.location.href);
+                    window.onpopstate = function () {
+                        window.history.pushState(null, "", window.location.href);
+                    };
+                }
+
+                window.location.href = "/login";
+            });
+        }
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        });
 
         // Initialize
         function initPage() {

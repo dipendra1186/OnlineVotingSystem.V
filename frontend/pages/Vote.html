@@ -148,7 +148,7 @@
             <li><a href="/results">Results</a></li>
             <li><a href="/help">Help & Support</a></li>
         </ul>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
 
     <!-- Main Content -->
@@ -595,6 +595,33 @@
             }
             window.countdownInterval = setInterval(updateTimer, 1000);
         }
+
+        function logout() {
+                const confirmLogout = confirm("Are you sure you want to logout?");
+                if (!confirmLogout) return;
+
+                fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, "", window.location.href);
+                        window.onpopstate = function () {
+                            window.history.pushState(null, "", window.location.href);
+                        };
+                    }
+
+                    window.location.href = "/login";
+                });
+            }
+
+
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+            });
 
         // Initial load
         loadAvailableElections();

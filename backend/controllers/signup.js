@@ -71,6 +71,16 @@ const createCustomer = async (req, res) => {
             return res.status(400).json({ message: 'Email already exists. Try logging in or use a different one.' });
         }
 
+        // Password strength validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                message: 'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*).'
+            });
+        }
+
+
         // NID checks (for Voters)
         if (role === "Voter") {
             const [nidCheck] = await connection.execute(

@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 // GET: Fetch voters pending verification
 exports.getPendingVoters = async (req, res) => {
     try {
-        const [voters] = await db.query("SELECT * FROM voters WHERE status = 'Pending'");
+        const [voters] = await db.query("SELECT * FROM voters WHERE status IN ('Pending', 'Rejected')");
         res.json(voters);
     } catch (err) {
         console.error(err);
