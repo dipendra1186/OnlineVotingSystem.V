@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 
-// Database connection
+// DB Connection
 async function connectDB() {
     const connection = await mysql.createConnection({
         host: process.env.DB_HOST,
@@ -11,87 +11,78 @@ async function connectDB() {
         password: process.env.DB_PASS,
         database: process.env.DB_NAME
     });
-    console.log("✅ Connected to the database in signup");
+    console.log("✅ Connected to DB");
     return connection;
 }
 
-// Generate unique Admin or Voter ID
+// Generate unique ID
 async function generateUniqueID(role, fullName, connection) {
     const prefix = role === "Admin" ? "A" : "V";
-    const currentYear = new Date().getFullYear();
-    let uniqueID;
-    let exists;
+    const year = new Date().getFullYear();
+    let uniqueID, exists;
 
     do {
-        const nameParts = fullName.trim().split(' ');
-        const firstInitial = nameParts[0]?.charAt(0).toUpperCase() || "X";
-        const lastInitial = nameParts[nameParts.length - 1]?.charAt(0).toUpperCase() || "X";
+        const [firstInitial, lastInitial] = fullName.trim().split(' ').map(n => n.charAt(0).toUpperCase());
         const randomNum = Math.floor(1000 + Math.random() * 9000);
-        uniqueID = `${prefix}${currentYear}${firstInitial}${lastInitial}${randomNum}`;
+        uniqueID = `${prefix}${year}${firstInitial || "X"}${lastInitial || "X"}${randomNum}`;
 
-        const [rows] = await connection.execute(
-            `SELECT * FROM ${role === "Admin" ? "admins" : "voters"} WHERE ${role === "Admin" ? "adminID" : "voterID"} = ?`,
-            [uniqueID]
-        );
+        const table = role === "Admin" ? "admins" : "voters";
+        const idCol = role === "Admin" ? "adminID" : "voterID";
 
+        const [rows] = await connection.execute(`SELECT 1 FROM ${table} WHERE ${idCol} = ?`, [uniqueID]);
         exists = rows.length > 0;
     } while (exists);
 
     return uniqueID;
 }
 
-// Main signup function
+// Main registration
 const createCustomer = async (req, res) => {
     try {
         const { fullName, age, gender, email, nid, password, role, photo } = req.body;
 
+        // Basic validation
         if (!fullName || !age || !gender || !email || !password || !role || !photo || !nid) {
-            return res.status(400).json({ message: 'All fields including photo and NID are required' });
+            return res.status(400).json({ message: 'All fields including photo and NID are required.' });
+        }
+
+        if (!['Voter', 'Admin'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role. Only Voter or Admin allowed.' });
         }
 
         const ageNum = parseInt(age);
         if (isNaN(ageNum) || ageNum < 18) {
-            return res.status(400).json({ message: 'Age must be 18 or above' });
+            return res.status(400).json({ message: 'You must be at least 18 years old to register.' });
         }
 
         const connection = await connectDB();
 
-        const nameParts = fullName.trim().split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts[nameParts.length - 1];
-        const modifiedEmail = `${email}-${firstName.charAt(0).toLowerCase()}${lastName.charAt(0).toLowerCase()}`;
+        // Normalize email
+        const [firstName, lastName] = fullName.trim().split(' ');
+        const modifiedEmail = `${email.trim().toLowerCase()}-${(firstName[0] || 'x').toLowerCase()}${(lastName?.[0] || 'x').toLowerCase()}`;
 
-        // Check for existing email
-        const [existingUser] = await connection.execute(
-            `SELECT * FROM ${role === "Admin" ? "admins" : "voters"} WHERE email = ?`,
+        const table = role === "Admin" ? "admins" : "voters";
+
+        const [existingEmail] = await connection.execute(
+            `SELECT 1 FROM ${table} WHERE email = ?`,
             [modifiedEmail]
         );
-        if (existingUser.length > 0) {
-            return res.status(400).json({ message: 'Email already exists' });
+        if (existingEmail.length > 0) {
+            return res.status(400).json({ message: 'Email already exists. Try logging in or use a different one.' });
         }
 
-        // NID Check for Voters only
-        let finalNID = nid;
-
+        // NID checks (for Voters)
         if (role === "Voter") {
-            const [nidResults] = await connection.execute(
-                `SELECT nid, status FROM voters WHERE nid = ?`,
+            const [nidCheck] = await connection.execute(
+                `SELECT status FROM voters WHERE nid = ?`,
                 [nid]
             );
-
-            if (nidResults.length > 0) {
-                const found = nidResults[0];
-
-                if (found.status === "Verified") {
-                    return res.status(400).json({ message: 'This NID is already verified and cannot be reused.' });
-                }
-
-                if (found.status === "Pending") {
-                    return res.status(400).json({ message: 'This NID is already under verification. Please wait for review.' });
-                }
-
-                if (found.status === "Rejected") {
-                    console.log(`⚠️ Previous registration with NID ${nid} was rejected. Allowing new entry.`);
+            if (nidCheck.length > 0) {
+                const existing = nidCheck[0].status;
+                if (['Verified', 'Pending'].includes(existing)) {
+                    return res.status(400).json({
+                        message: `This NID is already ${existing}. Re-registration is not allowed.`
+                    });
                 }
             }
         }
@@ -99,21 +90,19 @@ const createCustomer = async (req, res) => {
         const userID = await generateUniqueID(role, fullName, connection);
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date();
-        otpExpiry.setMinutes(otpExpiry.getMinutes() + 10);
+        const otpExpiry = new Date(Date.now() + 10 * 60000); // 10 min from now
 
-        // Insert into DB
+        // Insert
         const insertQuery = role === "Admin"
             ? `INSERT INTO admins (fullName, age, gender, email, password, adminID, otp, otpExpiry, photo, nid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo, nid, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            : `INSERT INTO voters (fullName, age, gender, email, password, voterID, otp, otpExpiry, photo, nid, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`;
 
         const insertParams = role === "Admin"
             ? [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, nid]
-            : [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, finalNID, 'Pending'];
-        
+            : [fullName, ageNum, gender, modifiedEmail, hashedPassword, userID, otp, otpExpiry, photo, nid];
 
         await connection.execute(insertQuery, insertParams);
-        console.log(`✅ Inserted user with ID: ${userID}`);
+        console.log(`✅ New ${role} registered with ID: ${userID}`);
 
         await sendOTP(email, otp, userID, role, photo);
 
@@ -129,14 +118,14 @@ const createCustomer = async (req, res) => {
     }
 };
 
-// Email sender
+// OTP Sender
 const sendOTP = async (email, otp, userID, role, photo) => {
     try {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'timalsinadipendra125@gmail.com',
-                pass: 'gtfc mlza rgzr vlwx',
+                user: process.env.EMAIL_USER,
+                pass: process.env.email,
             }
         });
 
@@ -146,19 +135,17 @@ const sendOTP = async (email, otp, userID, role, photo) => {
             subject: 'Your Registration Details',
             html: `
                 <h3>Welcome to the Online Voting System!</h3>
-                <p><strong>Your OTP:</strong> ${otp}</p>
-                <p><strong>Your ${role === "Admin" ? "Admin ID" : "Voter ID"}:</strong> ${userID}</p>
-                <p><strong>Your Photo (KYC):</strong></p>
-                <img src="${photo}" alt="KYC Photo" width="150" style="border-radius: 10px;" />
-                <p>Please use this ID for login and verification.</p>
-                ${role === "Voter" ? "<p>Your account is pending verification. You will be notified once your account is verified.</p>" : ""}
+                <p><strong>OTP:</strong> ${otp}</p>
+                <p><strong>${role} ID:</strong> ${userID}</p>
+                <img src="${photo}" alt="User Photo" width="150" style="border-radius: 10px;" />
+                ${role === "Voter" ? "<p>Your registration is under verification. You will be notified once approved.</p>" : ""}
             `
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent to ${email}`);
+        console.log(`✅ OTP email sent to ${email}`);
     } catch (error) {
-        console.error("❌ Failed to send OTP email:", error);
+        console.error("❌ Failed to send OTP:", error);
         throw new Error("Failed to send OTP email.");
     }
 };

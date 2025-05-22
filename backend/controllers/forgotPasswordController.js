@@ -20,7 +20,7 @@ const sendResetEmail = async (email, token, ID) => {
         service: "gmail",
         auth: {
             user: 'timalsinadipendra125@gmail.com',
-pass: 'gtfc mlza rgzr vlwx',
+pass: process.env.email,
         },
     });
 

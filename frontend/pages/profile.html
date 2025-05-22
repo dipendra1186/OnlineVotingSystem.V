@@ -18,7 +18,6 @@
             overflow: hidden;
         }
 
-
         .logout-btn {
             margin-top: 2rem;
             background-color: #ef4444;
@@ -36,9 +35,9 @@
         }
 
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             padding: 2.5rem;
-            width: calc(100% - 250px);
+            width: 100%;
             height: 100vh;
             overflow-y: auto;
         }
@@ -99,6 +98,23 @@
             margin-bottom: 1rem;
             border-radius: 8px;
             font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-toggle {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .debug-toggle:hover {
+            background-color: #2563eb;
         }
 
         .btn-danger {
@@ -114,15 +130,53 @@
             background-color: #dc2626;
         }
 
+        .error-message {
+            color: red;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #ffeeee;
+            border-radius: 8px;
+            border: 1px solid #ffcccc;
+        }
+
+        .success-message {
+            color: green;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #eeffee;
+            border-radius: 8px;
+            border: 1px solid #ccffcc;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #9ca3af;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #374151;
+        }
+
+        .localStorage-debug {
+            background-color: #e0f2fe;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
             .main-content {
-                margin-left: 0;
-                width: 100%;
                 padding: 1.5rem;
             }
 
@@ -134,26 +188,31 @@
 </head>
 
 <body>
-    
-
     <div class="main-content">
         <!-- Cross Button to go back -->
         <div style="text-align: right;">
-            <button onclick="goToDashboard()"
-                style="background: none; border: none; font-size: 2rem; color: #9ca3af; cursor: pointer; margin-bottom: 10px;">
+            <button onclick="goToDashboard()" class="close-btn" title="Go back to dashboard">
                 &times;
             </button>
         </div>
 
-
         <div class="profile-container">
             <h2>User Profile</h2>
-            <div id="debug-info" class="debug-info">
-                <p><strong>Debug Info:</strong> <span id="debug-message">Initializing...</span></p>
+
+            <button id="debug-toggle" class="debug-toggle" onclick="toggleDebug()">Toggle Debug Info</button>
+
+            <div id="debug-info" class="debug-info" style="display: none;">
+                <p><strong>Debug Messages:</strong></p>
+                <div id="debug-messages"></div>
+            </div>
+
+            <div id="localStorage-debug" class="localStorage-debug" style="display: none;">
+                <strong>LocalStorage Contents:</strong>
+                <div id="localStorage-content"></div>
             </div>
 
             <div class="profile-card">
-                <img id="user-photo" src="" alt="User Photo"
+                <img id="user-photo" src="/api/placeholder/150/150" alt="User Photo"
                     style="width: 150px; height: 150px; object-fit: cover; border-radius: 20px; margin-bottom: 15px;" />
                 <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
                 <p><strong>User ID:</strong> <span id="user-id">Loading...</span></p>
@@ -161,121 +220,357 @@
                 <p><strong>Role:</strong> <span id="user-role">Loading...</span></p>
                 <p><strong>Verified:</strong> <span id="user-status">Loading...</span></p>
             </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button id="logout-btn" class="btn-danger">Logout</button>
+            </div>
         </div>
     </div>
 
     <script>
+        let debugMessages = [];
+        let debugVisible = false;
 
-        function goToDashboard() {
-                const role = localStorage.getItem('role')?.toLowerCase(); // get role from localStorage
+        function toggleDebug() {
+            debugVisible = !debugVisible;
+            const debugDiv = document.getElementById('debug-info');
+            const localStorageDiv = document.getElementById('localStorage-debug');
 
-                if (role === 'voter') {
-                    window.location.href = '/vDashboard';  // if voter, go to vDashboard
-                } else if (role === 'admin') {
-                    window.location.href = '/dashboard';   // if admin, go to dashboard
-                } else {
-                    window.location.href = '/'; // fallback (optional: send to homepage if role not found)
-                }
+            if (debugVisible) {
+                debugDiv.style.display = 'block';
+                localStorageDiv.style.display = 'block';
+                updateLocalStorageDebug();
+            } else {
+                debugDiv.style.display = 'none';
+                localStorageDiv.style.display = 'none';
             }
-        function updateDebug(message) {
-            document.getElementById('debug-message').textContent = message;
-            console.log("Debug:", message);
         }
 
-        function showError(message) {
-            const container = document.querySelector('.profile-container');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.style.color = 'red';
-            errorDiv.style.padding = '10px';
-            errorDiv.style.marginBottom = '10px';
-            errorDiv.style.backgroundColor = '#ffeeee';
-            errorDiv.textContent = message;
+        function updateDebug(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const debugMessage = `[${timestamp}] ${message}`;
+            debugMessages.push(debugMessage);
 
-            container.insertBefore(errorDiv, container.firstChild);
-            setTimeout(() => errorDiv.remove(), 10000);
+            // Keep only last 20 messages
+            if (debugMessages.length > 20) {
+                debugMessages = debugMessages.slice(-20);
+            }
+
+            const debugDiv = document.getElementById('debug-messages');
+            if (debugDiv) {
+                debugDiv.innerHTML = debugMessages.join('<br>');
+                debugDiv.scrollTop = debugDiv.scrollHeight;
+            }
+
+            console.log("Debug:", debugMessage);
+        }
+
+        function updateLocalStorageDebug() {
+            const content = document.getElementById('localStorage-content');
+            if (!content) return;
+
+            let output = '';
+            const keys = Object.keys(localStorage);
+
+            if (keys.length === 0) {
+                output = 'LocalStorage is empty';
+            } else {
+                keys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    output += `${key}: ${value}\n`;
+                });
+            }
+
+            content.textContent = output;
+        }
+
+        function goToDashboard() {
+            const role = localStorage.getItem('role')?.toLowerCase();
+
+            if (role === 'voter') {
+                window.location.href = '/vDashboard';
+            } else if (role === 'admin') {
+                window.location.href = '/dashboard';
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        function showMessage(message, isError = true) {
+            const container = document.querySelector('.profile-container');
+            const existingMessage = container.querySelector('.error-message, .success-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isError ? 'error-message' : 'success-message';
+            messageDiv.textContent = message;
+
+            container.insertBefore(messageDiv, container.children[1]);
+            setTimeout(() => messageDiv.remove(), 10000);
+        }
+
+        // Enhanced function to parse localStorage data
+        function parseUserData() {
+            updateDebug("=== Starting localStorage parsing ===");
+
+            // Method 1: Try individual keys first
+            let userID = localStorage.getItem('userID');
+            let userEmail = localStorage.getItem('userEmail');
+            let role = localStorage.getItem('role');
+
+            updateDebug(`Method 1 - Individual keys: userID=${userID}, userEmail=${userEmail}, role=${role}`);
+
+            if (userID && userEmail) {
+                updateDebug("✅ Found data via individual localStorage keys");
+                return { userID, userEmail, role: role || 'Voter' };
+            }
+
+            // Method 2: Check for common variations
+            const commonKeys = ['user_id', 'userId', 'email', 'user_email', 'userRole', 'user_role'];
+            updateDebug(`Method 2 - Checking common key variations: ${commonKeys.join(', ')}`);
+
+            for (let key of commonKeys) {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    updateDebug(`Found ${key}: ${value}`);
+                    if (key.includes('id') || key.includes('ID')) userID = userID || value;
+                    if (key.includes('email') || key.includes('Email')) userEmail = userEmail || value;
+                    if (key.includes('role') || key.includes('Role')) role = role || value;
+                }
+            }
+
+            if (userID && userEmail) {
+                updateDebug("✅ Found data via common key variations");
+                return { userID, userEmail, role: role || 'Voter' };
+            }
+
+            // Method 3: Parse concatenated or JSON data
+            updateDebug("Method 3 - Scanning all localStorage for user data patterns");
+            const allKeys = Object.keys(localStorage);
+            updateDebug(`All localStorage keys: ${allKeys.join(', ')}`);
+
+            for (let key of allKeys) {
+                const value = localStorage.getItem(key);
+                if (!value) continue;
+
+                updateDebug(`Analyzing key '${key}': ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
+
+                // Try to parse as JSON first
+                try {
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        updateDebug(`Key '${key}' contains JSON object`);
+
+                        // Look for user data in JSON
+                        const possibleUserID = parsed.userID || parsed.userId || parsed.id || parsed.voterID || parsed.adminID;
+                        const possibleEmail = parsed.email || parsed.userEmail;
+                        const possibleRole = parsed.role || parsed.userRole;
+
+                        if (possibleUserID && possibleEmail) {
+                            updateDebug(`✅ Found data in JSON object from key '${key}'`);
+
+                            // Store for next time
+                            localStorage.setItem('userID', possibleUserID);
+                            localStorage.setItem('userEmail', possibleEmail);
+                            localStorage.setItem('role', possibleRole || 'Voter');
+
+                            return {
+                                userID: possibleUserID,
+                                userEmail: possibleEmail,
+                                role: possibleRole || 'Voter'
+                            };
+                        }
+                    }
+                } catch (e) {
+                    // Not JSON, continue with string parsing
+                }
+
+                // Pattern matching for concatenated data
+                if (value.includes('@') && (value.includes('V2025') || value.includes('A2025'))) {
+                    updateDebug(`Key '${key}' contains email and ID patterns`);
+
+                    // Extract email
+                    const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+                    const emailMatch = value.match(emailRegex);
+
+                    // Extract userID (Voter or Admin pattern)
+                    const userIdRegex = /([VA]\d{4}[A-Z]{2}\d+)/;
+                    const userIdMatch = value.match(userIdRegex);
+
+                    // Extract role
+                    let extractedRole = 'Voter';
+                    if (value.toLowerCase().includes('admin')) {
+                        extractedRole = 'Admin';
+                    }
+
+                    if (emailMatch && userIdMatch) {
+                        userEmail = emailMatch[1];
+                        userID = userIdMatch[1];
+                        role = extractedRole;
+
+                        updateDebug(`✅ Extracted from concatenated data - Email: ${userEmail}, UserID: ${userID}, Role: ${role}`);
+
+                        // Store properly for next time
+                        localStorage.setItem('userEmail', userEmail);
+                        localStorage.setItem('userID', userID);
+                        localStorage.setItem('role', role);
+
+                        return { userID, userEmail, role };
+                    }
+                }
+            }
+
+            // Method 4: Check URL parameters as fallback
+            updateDebug("Method 4 - Checking URL parameters");
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUserID = urlParams.get('userID') || urlParams.get('id');
+            const urlEmail = urlParams.get('email');
+
+            if (urlUserID) {
+                updateDebug(`Found userID in URL: ${urlUserID}`);
+                // Store in localStorage for next time
+                localStorage.setItem('userID', urlUserID);
+                if (urlEmail) {
+                    localStorage.setItem('userEmail', urlEmail);
+                }
+                return {
+                    userID: urlUserID,
+                    userEmail: urlEmail || 'unknown@example.com',
+                    role: 'Voter'
+                };
+            }
+
+            updateDebug("❌ No user data found in any method");
+            return null;
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            updateDebug("DOM loaded. Checking local storage...");
+            updateDebug("=== DOM LOADED - Starting user profile initialization ===");
+            updateLocalStorageDebug();
 
-            const userID = localStorage.getItem('userID');
-            const userEmail = localStorage.getItem('userEmail');
+            const userData = parseUserData();
 
-            if (!userID || !userEmail) {
-                updateDebug("User ID or email not found in localStorage");
-                showError("No user logged in. Redirecting to login page...");
+            if (!userData || !userData.userID) {
+                updateDebug("❌ USER DATA NOT FOUND - Redirecting to login");
+                showMessage("No user logged in. Redirecting to login page...", true);
+
+                // Show debug info automatically when there's an error
+                if (!debugVisible) {
+                    toggleDebug();
+                }
+
                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 3000);
+                    window.location.href = '/login';
+                }, 5000); // Give more time to see debug info
                 return;
             }
 
-            updateDebug(`Found user ID: ${userID}, email: ${userEmail}`);
-            document.getElementById('user-id').textContent = userID + " (from localStorage)";
-            document.getElementById('user-email').textContent = userEmail + " (from localStorage)";
+            const { userID, userEmail, role } = userData;
+            updateDebug(`✅ USER DATA FOUND - ID: ${userID}, Email: ${userEmail}, Role: ${role}`);
+
+            // Display basic info immediately
+            document.getElementById('user-id').textContent = userID;
+            document.getElementById('user-email').textContent = userEmail;
+            document.getElementById('user-role').textContent = role || 'Unknown';
 
             try {
-                updateDebug("Attempting to fetch profile data...");
-                const apiUrl = `/api/user/profile?id=${userID}`;
-                updateDebug(`Fetching from: ${apiUrl}`);
+                updateDebug("🌐 Attempting to fetch detailed profile from server...");
+                const apiUrl = `/api/user/profile?id=${encodeURIComponent(userID)}`;
+                updateDebug(`📡 API URL: ${apiUrl}`);
 
-                const response = await fetch(apiUrl);
-                updateDebug(`Response status: ${response.status}`);
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                updateDebug(`📡 Response status: ${response.status} ${response.statusText}`);
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        throw new Error(errorData.message || "Failed to fetch profile");
-                    } catch (e) {
-                        throw new Error(`Server error: ${response.status}. Response: ${errorText}`);
-                    }
+                    updateDebug(`❌ API Error Response: ${errorText}`);
+
+                    // Show basic info even if API fails
+                    document.getElementById('user-name').textContent = 'Unable to load from server';
+                    document.getElementById('user-status').textContent = 'Unknown';
+
+                    showMessage(`Unable to load detailed profile from server (Status: ${response.status}). Showing basic info only.`, true);
+                    return;
                 }
 
                 const contentType = response.headers.get("content-type");
+                updateDebug(`📡 Response content-type: ${contentType}`);
+
                 if (!contentType || !contentType.includes("application/json")) {
-                    const errorText = await response.text();
-                    throw new Error("Server returned non-JSON response");
+                    throw new Error(`Server returned non-JSON response: ${contentType}`);
                 }
 
                 const data = await response.json();
-                updateDebug(`Data received: ${JSON.stringify(data).substring(0, 100)}...`);
+                updateDebug(`📡 API Response: ${JSON.stringify(data, null, 2)}`);
 
-                if (!data.success) {
-                    throw new Error(data.message || "Unknown error");
+                if (data.success && data.user) {
+                    // Update with server data
+                    document.getElementById('user-id').textContent = data.user.id || userID;
+                    document.getElementById('user-email').textContent = data.user.email || userEmail;
+                    document.getElementById('user-name').textContent = data.user.name || 'N/A';
+                    document.getElementById('user-role').textContent = data.user.role || role;
+                    document.getElementById('user-status').textContent = data.user.isVerified ? '✅ Verified' : '❌ Not Verified';
+
+                    // Handle photo
+                    if (data.user.photo && data.user.photo !== '/api/placeholder/150/150') {
+                        document.getElementById('user-photo').src = data.user.photo;
+                    }
+
+                    updateDebug("✅ Profile data loaded successfully from server!");
+                    showMessage("Profile loaded successfully!", false);
+                } else {
+                    throw new Error(data.message || "Invalid response format from server");
                 }
 
-                document.getElementById('user-id').textContent = data.user.id;
-
-                const emailParts = data.user.email.split('@');
-                let displayEmail = data.user.email;
-                if (emailParts.length === 2 && emailParts[1].includes('-')) {
-                    const domainClean = emailParts[1].split('-')[0];
-                    displayEmail = `${emailParts[0]}@${domainClean}.com`;
-                }
-                document.getElementById('user-email').textContent = displayEmail;
-
-                document.getElementById('user-name').textContent = data.user.name || 'N/A';
-                document.getElementById('user-role').textContent = data.user.role;
-                document.getElementById('user-status').textContent = data.user.isVerified ? '✅ Verified' : '❌ Not Verified';
-
-                document.getElementById('user-photo').src = data.user.photo || '../assets/img/default-avatar.png';
-
-                updateDebug("Profile data loaded successfully!");
             } catch (err) {
-                updateDebug(`Error: ${err.message}`);
-                showError(`Error: ${err.message}`);
+                updateDebug(`❌ Error fetching profile: ${err.message}`);
+
+                // Show basic info even if detailed fetch fails
+                document.getElementById('user-name').textContent = 'Unable to load from server';
+                document.getElementById('user-status').textContent = 'Unknown';
+
+                showMessage(`Error loading detailed profile: ${err.message}. Showing basic info only.`, true);
                 console.error("Profile fetch error:", err);
             }
+        });
 
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                updateDebug("Logging out...");
-                localStorage.removeItem('userID');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('userRole');
-                window.location.href = './login';
+        // Enhanced logout functionality
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            updateDebug("🚪 Logging out user...");
+
+            // Clear all standard localStorage keys
+            const keysToRemove = [
+                'userID', 'userEmail', 'role', 'token', 'user_id', 'userId',
+                'email', 'user_email', 'userRole', 'user_role'
+            ];
+
+            keysToRemove.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    updateDebug(`Removing localStorage key: ${key}`);
+                    localStorage.removeItem(key);
+                }
             });
+
+            // Clear any other keys that might contain user data
+            const allKeys = Object.keys(localStorage);
+            allKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value && (value.includes('@') || value.includes('V2025') || value.includes('A2025'))) {
+                    updateDebug(`Removing localStorage key with user data: ${key}`);
+                    localStorage.removeItem(key);
+                }
+            });
+
+            updateDebug("✅ Logout complete - redirecting to login");
+            window.location.href = '/login';
         });
     </script>
 </body>

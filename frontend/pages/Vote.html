@@ -205,17 +205,44 @@
 
         // Check if voter is verified before loading the voting page
         document.addEventListener("DOMContentLoaded", function () {
-            const voterStatus = localStorage.getItem("status");
+                checkVoterAccessLive();
+            });
 
-            if (voterStatus === "Pending" || voterStatus === "Rejected" || !voterStatus) {
-                // Block access if not verified
-                window.location.href = "/verifyErrors";
-            } else {
-                // Allow access — no redirect
-                loadAvailableElections();
-                loadVotingHistory();
+            async function checkVoterAccessLive() {
+                const voterID = localStorage.getItem('userID');
+                const role = localStorage.getItem('role');
+
+                if (role?.toLowerCase() !== 'voter' || !voterID) {
+                    window.location.href = '/verifyErrors';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/user/profile?id=${voterID}`);
+                    const result = await response.json();
+
+                    if (result.success && result.user.role.toLowerCase() === 'voter') {
+                        const { status } = result.user;
+
+                        if (status !== 'Verified') {
+                            // Not verified: redirect to error page
+                            window.location.href = '/verifyErrors';
+                        } else {
+                            // Verified: allow access
+                            loadAvailableElections();
+                            loadVotingHistory();
+                        }
+                    } else {
+                        // Invalid user or role
+                        window.location.href = '/verifyErrors';
+                    }
+                } catch (error) {
+                    console.error('Error verifying voter access:', error);
+                    window.location.href = '/verifyErrors';
+                }
             }
-        });
+                setInterval(checkVoterAccessLive, 1000);
+
 
         // Load available elections the user can vote in
         async function loadAvailableElections() {

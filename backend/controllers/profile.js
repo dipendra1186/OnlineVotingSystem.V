@@ -1,6 +1,5 @@
 const db = require('../config/db');
 
-
 const maskEmail = (email) => {
     if (!email) return '';
     const [local, domain] = email.split('@');
@@ -21,13 +20,15 @@ const getUserProfile = async (req, res) => {
     try {
         // Try Voter table
         let [voters] = await db.query(
-            'SELECT voterID AS id, fullName AS name, email, photo FROM voters WHERE voterID = ?',
+            'SELECT voterID AS id, fullName AS name, email, photo, status FROM voters WHERE voterID = ?',
             [userID]
         );
 
         if (voters.length > 0) {
             const user = { ...voters[0], role: 'Voter' };
             user.email = maskEmail(user.email);
+            user.isVerified = user.status === 'Verified'; // boolean for frontend logic
+
             return res.json({
                 success: true,
                 user
@@ -52,7 +53,7 @@ const getUserProfile = async (req, res) => {
         if (admins.length > 0) {
             const user = { ...admins[0], role: 'Admin' };
             user.email = maskEmail(user.email);
-            user.isVerified = user.isVerified || 'VIP';
+            user.isVerified = true; // All admins are treated as verified
 
             return res.json({
                 success: true,

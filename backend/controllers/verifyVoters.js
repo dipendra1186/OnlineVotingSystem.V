@@ -67,7 +67,7 @@ async function sendVerificationEmail(email, fullName) {
         service: 'gmail',
         auth: {
             user: 'timalsinadipendra125@gmail.com',
-            pass: 'gtfc mlza rgzr vlwx',
+            pass: process.env.email,
         }
     });
 
@@ -138,7 +138,7 @@ async function sendRejectionEmail(email, fullName) {
         service: 'gmail',
         auth: {
             user: 'timalsinadipendra125@gmail.com',
-            pass: 'gtfc mlza rgzr vlwx',
+            pass: process.env.email,
         }
     });
 
